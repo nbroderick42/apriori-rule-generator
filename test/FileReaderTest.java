@@ -1,8 +1,8 @@
-import org.junit.*;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
-import static org.junit.Assert.*;
+import org.junit.*;
 
 /**
  * Created by Jonathan McDevitt on 2017-03-24.
