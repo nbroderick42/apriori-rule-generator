@@ -2,6 +2,7 @@ import static org.junit.Assert.*;
 
 import java.util.List;
 
+import HelperObjects.FileReader;
 import org.junit.*;
 
 /**

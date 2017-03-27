@@ -1,3 +1,5 @@
+package HelperObjects;
+
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.counting;
@@ -53,7 +55,7 @@ public class Dataset {
      * attributes and each rows contains all the values for the given attribute.
      */
     private List<List<Integer>> invertedTable;
-    
+
     /*
      * A genereator of integer labels for the table of data 
      */
@@ -74,8 +76,8 @@ public class Dataset {
     private static final Predicate<String> isNotEmpty = s -> !s.isEmpty();
 
     private Dataset(List<List<Integer>> table, Set<Integer> attributeSet, List<List<Integer>> invertedTable,
-            LabelGenerator tableLabelGenerator, LabelGenerator headerLabelGenerator,
-            Map<Integer, List<Integer>> valueRangeMap) {
+                    LabelGenerator tableLabelGenerator, LabelGenerator headerLabelGenerator,
+                    Map<Integer, List<Integer>> valueRangeMap) {
 
         this.table = table;
         this.attributeSet = attributeSet;
@@ -118,7 +120,7 @@ public class Dataset {
             return new HashSet<>(tokenToLabelMap.values());
         }
     }
-    
+
     /*
      * Returns a dataset generated from a file without assumed prior labels 
      */
@@ -127,29 +129,29 @@ public class Dataset {
         LabelGenerator headerLabelGenerator = new LabelGenerator();
         return fromFile(path, format, tableLabelGenerator, headerLabelGenerator);
     }
-    
+
     /*
      * Returns a dataset generated from a file assumed labelling. Used for creating
      * test sets built using th elabels already generated from a training dataset
      */
     public static Dataset fromFile(Path path, FileFormat format, Map<String, Integer> tableLabels,
-            Map<String, Integer> headerLabels) throws IOException {
+                                   Map<String, Integer> headerLabels) throws IOException {
         LabelGenerator tableLabelGenerator = new LabelGenerator(tableLabels);
         LabelGenerator headerLabelGenerator = new LabelGenerator(headerLabels);
         return fromFile(path, format, tableLabelGenerator, headerLabelGenerator);
     }
-    
+
     /*
-     * Private helper methods to generate the Dataset 
+     * Private helper methods to generate the HelperObjects.Dataset
      */
     private static Dataset fromFile(Path path, FileFormat format, LabelGenerator tableLabelGenerator,
-            LabelGenerator headerLabelGenerator) throws IOException {
+                                    LabelGenerator headerLabelGenerator) throws IOException {
         String[][] lines = readLines(path, format);
         return fromLines(lines, tableLabelGenerator, headerLabelGenerator);
     }
 
     private static Dataset fromLines(String[][] lines, LabelGenerator tableLabelGenerator,
-            LabelGenerator headerLabelGenerator) {
+                                     LabelGenerator headerLabelGenerator) {
         List<List<Integer>> table = makeTable(lines, tableLabelGenerator);
         Set<Integer> attributes = makeAttributeSet(lines, headerLabelGenerator);
 
@@ -157,7 +159,7 @@ public class Dataset {
     }
 
     private static Dataset fromTable(List<List<Integer>> table, Set<Integer> attributes,
-            LabelGenerator tableLabelGenerator, LabelGenerator headerLabelGenerator) {
+                                     LabelGenerator tableLabelGenerator, LabelGenerator headerLabelGenerator) {
 
         Set<Integer> attributeSet = headerLabelGenerator.getLabelSet();
         List<List<Integer>> invertedTable = makeInvertedTable(table);
@@ -166,7 +168,7 @@ public class Dataset {
         return new Dataset(table, attributeSet, invertedTable, tableLabelGenerator, headerLabelGenerator,
                 valueRangeMap);
     }
-    
+
     /*
      * Given a list of tokens and a label generator, produce the table of data
      */
@@ -175,8 +177,8 @@ public class Dataset {
                 .map(tokens -> Arrays.stream(tokens).map(labelGenerator::getLabel).collect(toList()))
                 .map(Collections::unmodifiableList).collect(collectingAndThen(toList(), Collections::unmodifiableList));
     }
-    
-    
+
+
     /*
      * Given a list of tokens and a label generator, returns the list of attribute labels 
      */
@@ -377,8 +379,8 @@ public class Dataset {
     public int size() {
         return table.size();
     }
-    
-    
+
+
     /*
      * Class which abstracts the logic of maintaining and distributing integer labels 
      */
@@ -399,9 +401,9 @@ public class Dataset {
             return testSet;
         }
     }
-    
+
     /*
-     * Splits the Dataset into two separate sets. Unfortuantely, this is dead code I did
+     * Splits the HelperObjects.Dataset into two separate sets. Unfortuantely, this is dead code I did
      * not get to use. 
      */
     public TrainTestDatasetSplit splitDataset(double splitRatio) {
@@ -409,7 +411,7 @@ public class Dataset {
             throw new IllegalArgumentException("Split ration must be between 0.0 and 1.0");
         }
         if (table.size() < 2) {
-            throw new IllegalStateException("Cannot split Dataset with fewer than 2 examples");
+            throw new IllegalStateException("Cannot split HelperObjects.Dataset with fewer than 2 examples");
         }
 
         Random rand = new Random();
@@ -426,7 +428,7 @@ public class Dataset {
 
         return new TrainTestDatasetSplit(trainingDataset, testDataset);
     }
-    
+
     /*
      * Enum type defining different file formats and the mapping functions
      * used to tokenize them. Unfortunately, this is superfluous now, as I did not
