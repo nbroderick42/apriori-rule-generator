@@ -28,6 +28,7 @@ public class TTree {
         prune(start, 1);
         genLevelN(start, 1, 1, null);
         int k = 2;
+
         do {
             addSupport(k);
             prune(start, k);
@@ -39,12 +40,7 @@ public class TTree {
 
     private void createTTreeTopLevel(Dataset dataset) {
         dataset.getValueRangeSet().forEach(val -> start.add(new Node()));
-        dataset.getTable().forEach(r -> {
-            r.forEach(s -> {
-                start.get(s).sup++;
-            });
-        });
-
+        dataset.getTable().forEach(r -> r.forEach(s -> start.get(s).sup++));
     }
 
     private void prune(List<Node> ref, int k) {
@@ -53,6 +49,7 @@ public class TTree {
     }
 
     private void genLevelN(List<Node> ref, int k, int newK, List<Node> I) {
+
         // TODO Auto-generated method stub
 
     }
