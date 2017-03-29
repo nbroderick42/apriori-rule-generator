@@ -2,6 +2,7 @@ package TTree;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 import HelperObjects.Dataset;
 
@@ -183,9 +184,11 @@ public class TTree {
             return true;
         }
         else {
-            for (Node n : ref) {
+            ListIterator<Node> li = ref.listIterator(ref.size());
+            while (li.hasPrevious()) {
+                Node n = li.previous();
                 if (n.val == testSet.get(i)) {
-                    return findInTree(testSet, i--, n.children);
+                    return findInTree(testSet, i - 1, n.children);
                 }
             }
             return false;
