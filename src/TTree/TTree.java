@@ -1,9 +1,9 @@
 package TTree;
 
-import HelperObjects.Dataset;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import HelperObjects.Dataset;
 
 /**
  * Created by Jonathan McDevitt on 2017-03-24.
@@ -11,33 +11,30 @@ import java.util.List;
 public class TTree {
 
     private List<Node> start;
+    private Dataset dataset;
+    private boolean isNewLevel;
 
     private class Node {
         private int sup;
         private List<Node> children;
     }
 
-    private TTree() {
-
+    public TTree(Dataset dataset) {
+        createTtree();
     }
 
-    public static TTree createTtree(Dataset dataset) {
-        TTree tree = new TTree();
-        tree.createTTreeTopLevel(dataset);
-
-        tree.prune(1);
-        tree.genLevelN(1, 1, null);
+    private void createTtree() {
+        createTTreeTopLevel(dataset);
+        prune(start, 1);
+        genLevelN(start, 1, 1, null);
         int k = 2;
-        
-        boolean isNewLevel = false;
         do {
-            tree.addSupport(dataset, k);
-            tree.prune(k);
-            isNewLevel = tree.genLevelN(1, k, new ArrayList<>());
+            addSupport(k);
+            prune(start, k);
+            isNewLevel = false;
+            genLevelN(start, 1, k, new ArrayList<>());
             k++;
         } while (isNewLevel);
-        
-        return tree;
     }
 
     private void createTTreeTopLevel(Dataset dataset) {
@@ -47,22 +44,30 @@ public class TTree {
                 start.get(s).sup++;
             });
         });
-        
+
     }
 
-    private void prune(int k) {
+    private void prune(List<Node> ref, int k) {
         // TODO Auto-generated method stub
 
     }
-    
-    private boolean genLevelN(int i, int j, List<Node> list) {
-        return false;
-        
-    }
-    
-    private void addSupport(Dataset dataset, int k) {
+
+    private void genLevelN(List<Node> ref, int k, int newK, List<Node> I) {
         // TODO Auto-generated method stub
-        
+
+    }
+
+    private void addSupport(int k) {
+        // TODO Auto-generated method stub
+
+    }
+
+    private void addSup(List<Node> ref, int k, int end, int r) {
+        // TODO Implement
+    }
+
+    private void genLevel(List<Node> ref, int end, List<Node> I) {
+
     }
 
 }

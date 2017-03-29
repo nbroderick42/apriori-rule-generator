@@ -98,6 +98,7 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
+
 ### NetBeans template
 nbproject/private/
 build/
@@ -105,6 +106,7 @@ nbbuild/
 dist/
 nbdist/
 .nb-gradle/
+
 ### Java template
 # Compiled class file
 *.class
@@ -127,3 +129,7 @@ nbdist/
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+# Other eclipse ignores
+.classpath
+.settings/
