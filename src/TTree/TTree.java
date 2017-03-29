@@ -1,6 +1,7 @@
 package TTree;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -154,7 +155,7 @@ public class TTree {
         List<Integer> I2 = new ArrayList<>(I);
         I2.remove(2);
         
-        return combinations(null, 0, 2, I1, I2);
+        return combinations(Collections.emptyList(), 0, 2, I1, I2);
     }
 
     private boolean combinations(List<Integer> I, int start, int end, List<Integer> I1, List<Integer> I2) {
