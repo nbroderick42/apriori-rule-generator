@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.function.DoubleUnaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -71,7 +73,7 @@ public class Dataset {
      */
     private Map<Integer, List<Integer>> valueRangeMap;
 
-    private Set<Integer> valueRangeSet;
+    private SortedSet<Integer> valueRangeSet;
 
     private static final Function<Integer, Predicate<String[]>> hasCorrectNumberOfRows
             = rows -> (tks -> tks.length == rows);
@@ -79,7 +81,7 @@ public class Dataset {
 
     private Dataset(List<List<Integer>> table, Set<Integer> attributeSet, List<List<Integer>> invertedTable,
             LabelGenerator tableLabelGenerator, LabelGenerator headerLabelGenerator,
-            Map<Integer, List<Integer>> valueRangeMap, Set<Integer> valueRangeSet) {
+            Map<Integer, List<Integer>> valueRangeMap, SortedSet<Integer> valueRangeSet) {
 
         this.table = table;
         this.attributeSet = attributeSet;
@@ -168,17 +170,17 @@ public class Dataset {
         Set<Integer> attributeSet = headerLabelGenerator.getLabelSet();
         List<List<Integer>> invertedTable = makeInvertedTable(table);
         Map<Integer, List<Integer>> valueRangeMap = makeValueRangeMap(invertedTable);
-        Set<Integer> valueRangeSet = makeValueRangeSet(valueRangeMap);
+        SortedSet<Integer> valueRangeSet = makeValueRangeSet(valueRangeMap);
 
         return new Dataset(table, attributeSet, invertedTable, tableLabelGenerator, headerLabelGenerator,
                 valueRangeMap, valueRangeSet);
     }
 
-    private static Set<Integer> makeValueRangeSet(Map<Integer, List<Integer>> valueRangeMap) {
+    private static SortedSet<Integer> makeValueRangeSet(Map<Integer, List<Integer>> valueRangeMap) {
         return valueRangeMap.values().stream().reduce(new ArrayList<>(), (l1, l2) -> {
             l1.addAll(l2);
             return l1;
-        }).stream().collect(toSet());
+        }).stream().collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
     }
 
     /*
