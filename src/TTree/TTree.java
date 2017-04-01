@@ -21,22 +21,19 @@ import HelperObjects.Dataset;
  */
 public class TTree {
 
-    private List<Node> start;
+    private Node[] start;
     private Dataset dataset;
     private boolean isNewLevel;
     private int minSupport;
 
     private class Node {
         private int sup = 0;
-        private List<Node> children;
-        private int val;
+        private Node[] children;
+        public Node() {}
         
-        public Node(int val) {
-            this.val = val;
-        }
     }
 
-    public TTree(Dataset dataset, int minSupport) {
+    public TTree(Dataset dataset, int minSupport) { 
         this.dataset = dataset;
         this.minSupport = minSupport;
 
@@ -46,7 +43,7 @@ public class TTree {
     private void createTtree() {
         createTTreeTopLevel(dataset);
         prune(start, 1);
-        genLevelN(start, 1, 1, null);
+        genLevelN(start, 1, 1, new ArrayList<>());
         int k = 2;
 
         do {
@@ -59,21 +56,25 @@ public class TTree {
     }
 
     private void createTTreeTopLevel(Dataset dataset) {
-        dataset.getValueRangeSet().forEach(val -> start.add(new Node(val)));
-        dataset.getTable().forEach(r -> r.forEach(s -> start.get(s).sup++));
+    	start = new Node[dataset.getValueRangeSet().size()];
+    	for(int i = 0; i < start.length; i++) {
+    		start[i] = new Node();
+    	}
+        
+        dataset.getTable().forEach(r -> r.forEach(s -> start[s].sup++));
     }
 
-    private void prune(List<Node> ref, int k) {
+    private void prune(Node[] start, int k) {
         if (k == 1) {
-            for (Node t : ref) {
-                if (t != null && t.sup < minSupport) {
+            for (int i = 0; i < start.length; i++) {
+                if (start[i] != null && start[i].sup < minSupport) {
                     // Make sure this isn't broken
-                    ref.remove(t);
+                    start[i] = null;
                 }
             }
         }
         else {
-            for (Node t : ref) {
+            for (Node t : start) {
                 if (t != null && t.children != null) {
                     prune(t.children, k - 1);
                 }
@@ -81,20 +82,20 @@ public class TTree {
         }
     }
 
-    private void genLevelN(List<Node> ref, int k, int newK, List<Integer> I) {
+    private void genLevelN(Node[] ref, int k, int newK, List<Integer> I) {
         if (k == newK) {
-            for (int i = 2; i < ref.size(); i++) {
-                if (ref.get(i) != null) {
+            for (int i = 2; i < ref.length; i++) {
+                if (ref[i] != null) {
                     I.add(i);
                     genLevel(ref, i, I);
                 }
             }
         }
         else {
-            for (int i = 2; i < ref.size(); i++) {
-                if (ref.get(i) != null) {
+            for (int i = 2; i < ref.length; i++) {
+                if (ref[i] != null) {
                     I.add(i);
-                    genLevelN(ref.get(i).children, k + 1, newK, I);
+                    genLevelN(ref[i].children, k + 1, newK, I);
                 }
             }
         }
@@ -106,12 +107,12 @@ public class TTree {
         }
     }
 
-    private void addSup(List<Node> ref, int k, int end, List<Integer> r) {
+    private void addSup(Node[] ref, int k, int end, List<Integer> r) {
         if (k == 1) {
             for (int si : r) {
                 // Make better later (single var)
-                if (ref.get(si) != null) {
-                    ref.get(si).sup++;
+                if (ref[si] != null) {
+                    ref[si].sup++;
                 }
             }
         }
@@ -119,25 +120,24 @@ public class TTree {
             for (int i = 0; i < end; i++) {
                 int si = r.get(i);
                 // Make better later (single var)
-                if (ref.get(si) != null) {
-                    addSup(ref.get(si).children, k - 1, i, r);
+                if (ref[si] != null) {
+                    addSup(ref[si].children, k - 1, i, r);
                 }
             }
         }
     }
 
-    private void genLevel(List<Node> ref, int end, List<Integer> I) {
-        ref.get(end).children = new ArrayList<>();
+    private void genLevel(Node[] ref, int end, List<Integer> I) {
         for (int i = 1; i < end; i++) {
-            if (ref.get(i) != null) {
+            if (ref[i] != null) {
                 List<Integer> newI = new ArrayList<>(I);
                 newI.add(i);
                 if (testCombinations(newI)) {
-                    ref.get(end).children.set(i, new Node(i));
+                    ref[end].children[i] = new Node();
                     isNewLevel = true;
                 }
                 else {
-                    ref.get(end).children.set(i, null);
+                    ref[end].children[i] =  null;
                 }
             }
         }
@@ -180,17 +180,14 @@ public class TTree {
         return findInTree(testSet, testSet.size() - 1, start);
     }
     
-    private boolean findInTree(List<Integer> testSet, int i, List<Node> ref) {
-        if (i < 0) {
+    private boolean findInTree(List<Integer> testSet, int end, Node[] ref) {
+        if (end < 0) {
             return true;
         }
         else {
-            ListIterator<Node> li = ref.listIterator(ref.size());
-            while (li.hasPrevious()) {
-                Node n = li.previous();
-                if (n.val == testSet.get(i)) {
-                    return findInTree(testSet, i - 1, n.children);
-                }
+            int i = 0;
+            while(i < ref.length && testSet.get(i) != ref[i].sup) {
+            	i++;
             }
             return false;
         }
