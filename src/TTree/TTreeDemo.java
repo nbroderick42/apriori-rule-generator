@@ -10,7 +10,7 @@ import HelperObjects.Dataset.FileFormat;
 public class TTreeDemo {
 	public static void main(String[] args) throws IOException {
 		// TODO Auto-generated method stub
-		Dataset dataset = Dataset.fromFile(Paths.get("data1"), FileFormat.SPACE_SEPARATED);
+		Dataset dataset = Dataset.fromIntegerFile(Paths.get("data-test"), FileFormat.SPACE_SEPARATED);
 		
 		for(List<Integer> row : dataset.getTable()) {
 			for(Integer cell : row) {

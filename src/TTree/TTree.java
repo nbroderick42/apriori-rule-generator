@@ -1,11 +1,10 @@
 package TTree;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.ListIterator;
+import java.util.SortedSet;
 
 import HelperObjects.Dataset;
+import HelperObjects.Itemset;
 
 /*
  * Algorithm variables
@@ -14,6 +13,7 @@ import HelperObjects.Dataset;
  * N - number of columns/attributes
  * D - number of records
  * ref - reference to current node
+ * 
  */
 
 /**
@@ -24,94 +24,73 @@ public class TTree {
     private Node[] start;
     private Dataset dataset;
     private boolean isNewLevel;
-    private int minSupport;
+    private int minSup;
 
     private class Node {
         private int sup = 0;
-        private Node[] children;
-        public Node() {}
-        
+        private Node[] chdRef;        
     }
-
-    public TTree(Dataset dataset, int minSupport) { 
+    
+    public TTree(Dataset dataset, int minSupport) {
+        this.minSup = minSupport;
         this.dataset = dataset;
-        this.minSupport = minSupport;
-
+        
         createTtree();
     }
 
     private void createTtree() {
-        createTTreeTopLevel(dataset);
+        createTtreeTopLevel();
         prune(start, 1);
-        genLevelN(start, 1, 1, new ArrayList<>());
-        int k = 2;
-
-        do {
-            addSupport(k);
-            prune(start, k);
-            isNewLevel = false;
-            genLevelN(start, 1, k, new ArrayList<>());
-            k++;
-        } while (isNewLevel);
-    }
-
-    private void createTTreeTopLevel(Dataset dataset) {
-    	start = new Node[dataset.getValueRangeSet().size()];
-    	for(int i = 0; i < start.length; i++) {
-    		start[i] = new Node();
-    	}
+        genLevelN(start, 1, 1, new Itemset());
         
-        dataset.getTable().forEach(r -> r.forEach(s -> start[s].sup++));
+        int K = 2;
+        
+        while (isNewLevel) {
+            addSupport(K);
+            prune(start, K);
+            isNewLevel = false;
+            genLevelN(start, 1, K, new Itemset());
+            K++;
+        }
     }
 
-    private void prune(Node[] start, int k) {
-        if (k == 1) {
-            for (int i = 0; i < start.length; i++) {
-                if (start[i] != null && start[i].sup < minSupport) {
-                    // Make sure this isn't broken
-                    start[i] = null;
+    private void createTtreeTopLevel() {
+        List<List<Integer>> R = dataset.getTable();
+        SortedSet<Integer> I = dataset.getValueRangeSet();
+        
+        start = new Node[I.size() + 1];
+        I.forEach(si -> start[si] = new Node());
+        
+        R.forEach(ri -> ri.forEach(sj -> start[sj].sup++));
+    }
+    
+    private void prune(Node[] ref, int K) {
+        if (K == 1) {
+            for (int t = 1; t < ref.length; t++) {
+                if (ref[t] != null && ref[t].sup < minSup) {
+                    ref[t] = null;
                 }
             }
         }
         else {
-            for (Node t : start) {
-                if (t != null && t.children != null) {
-                    prune(t.children, k - 1);
+            for (int t = 1; t < ref.length; t++) {
+                if (ref[t] != null && ref[t].chdRef != null) {
+                    prune(ref[t].chdRef, K - 1);
                 }
             }
         }
     }
-
-    private void genLevelN(Node[] ref, int k, int newK, List<Integer> I) {
-        if (k == newK) {
-            for (int i = 2; i < ref.length; i++) {
-                if (ref[i] != null) {
-                    I.add(i);
-                    genLevel(ref, i, I);
-                }
-            }
-        }
-        else {
-            for (int i = 2; i < ref.length; i++) {
-                if (ref[i] != null) {
-                    I.add(i);
-                    genLevelN(ref[i].children, k + 1, newK, I);
-                }
-            }
-        }
+    
+    private void addSupport(int K) {
+        List<List<Integer>> R = dataset.getTable();
+        R.forEach(ri -> addSup(start, K, ri.size(), ri));
     }
-
-    private void addSupport(int k) {
-        for (List<Integer> r : dataset.getTable()) {
-            addSup(start, k, r.size(), r);
-        }
-    }
-
-    private void addSup(Node[] ref, int k, int end, List<Integer> r) {
-        if (k == 1) {
-            for (int si : r) {
-                // Make better later (single var)
-                if (ref[si] != null) {
+    
+    private void addSup(Node[] ref, int K, int end, List<Integer> r) {
+        if (K == 1) {
+            for (int i = 0; i < end; i++) {
+                int si = r.get(i);
+                if (si < ref.length && ref[si] != null) {
                     ref[si].sup++;
                 }
             }
@@ -119,78 +98,119 @@ public class TTree {
         else {
             for (int i = 0; i < end; i++) {
                 int si = r.get(i);
-                // Make better later (single var)
-                if (ref[si] != null) {
-                    addSup(ref[si].children, k - 1, i, r);
+                if (si < ref.length && ref[si] != null && ref[si].chdRef != null) {
+                    addSup(ref[si].chdRef, K - 1, i, r);
                 }
             }
         }
     }
-
-    private void genLevel(Node[] ref, int end, List<Integer> I) {
+    
+    private void genLevelN(Node[] ref, int K, int newK, Itemset I) {
+        if (K == newK) {
+            for (int i = 2; i < ref.length; i++) {
+                if (ref[i] != null) {
+                    genLevel(ref, i, append(i, I));
+                }
+            }
+        }
+        else {
+            for (int i = 2; i < ref.length; i++) {
+                if (ref[i] != null && ref[i].chdRef != null) {
+                    genLevelN(ref[i].chdRef, K + 1, newK, append(i, I));
+                }
+            }
+        }
+    }
+    
+    private void genLevel(Node[] ref, int end, Itemset I) {
+        ref[end].chdRef = new Node[end];
+        
         for (int i = 1; i < end; i++) {
             if (ref[i] != null) {
-                List<Integer> newI = new ArrayList<>(I);
-                newI.add(i);
+                //TODO: Does this need to copy or not!?
+                Itemset newI = append(i, I);
                 if (testCombinations(newI)) {
-                    ref[end].children[i] = new Node();
+                    ref[end].chdRef[i] = new Node();
                     isNewLevel = true;
                 }
                 else {
-                    ref[end].children[i] =  null;
+                    ref[end].chdRef[i] = null;
                 }
             }
         }
     }
-
-    private boolean testCombinations(List<Integer> I) {
+    
+    private boolean testCombinations(Itemset I) {
         if (I.size() < 3) {
             return true;
         }
         
-        List<Integer> I1 = new ArrayList<>();
-        I1.add(I.get(1));
-        I1.add(I.get(0));
+        Itemset I1 = doubleton(I.get(1), I.get(0));
+        Itemset I2 = delN(I, 2);
         
-        List<Integer> I2 = new ArrayList<>(I);
-        I2.remove(2);
-        
-        return combinations(Collections.emptyList(), 0, 2, I1, I2);
+        return combinations(new Itemset(), 0, 2, I1, I2);
     }
-
-    private boolean combinations(List<Integer> I, int start, int end, List<Integer> I1, List<Integer> I2) {
+    
+    private boolean combinations(Itemset I, int start, int end, Itemset I1, Itemset I2) {
         if (end > I2.size()) {
-            List<Integer> testSet = new ArrayList<>(I);
-            I.addAll(I1);
-            return findInTree(testSet);
+            Itemset testSet = append(I, I1);
+            return findInTtree(testSet);
         }
         else {
             for (int i = start; i < end; i++) {
-                List<Integer> tempSet = new ArrayList<>(I);
-                tempSet.add(I2.get(i));
+                Itemset tempSet = append(I2.get(i), I);
                 if (!combinations(tempSet, i + 1, end + 1, I1, I2)) {
                     return false;
                 }
             }
-            return true;
         }
-    }
-
-    private boolean findInTree(List<Integer> testSet) {
-        return findInTree(testSet, testSet.size() - 1, start);
+        return true;
     }
     
-    private boolean findInTree(List<Integer> testSet, int end, Node[] ref) {
-        if (end < 0) {
+    private boolean findInTtree(Itemset I) {
+        return findInTtree(I, I.size() - 1, start);
+    }
+    
+    private boolean findInTtree(Itemset I, int k, Node[] ref) {
+        if (k > 0) {
             return true;
         }
-        else {
-            int i = 0;
-            while(i < ref.length && testSet.get(i) != ref[i].sup) {
-            	i++;
-            }
+        else if (ref == null) {
             return false;
         }
+        else {
+            int next = I.get(k);
+            if (ref[next] != null) {
+                return findInTtree(I, k - 1, ref[next].chdRef);
+            }
+            else {
+                return false;
+            }
+        }
     }
-
+    
+    private static Itemset append(int i, Itemset I) {
+        Itemset ret = new Itemset(I);
+        ret.append(i);
+        return ret;
+    }
+    
+    private static Itemset append(Itemset I, Itemset J) {
+        Itemset ret = new Itemset(I);
+        ret.append(J);
+        return ret;
+    }
+    
+    private static Itemset doubleton(int i, int j) {
+        Itemset ret = new Itemset();
+        ret.append(i);
+        ret.append(j);
+        return ret;
+    }
+    
+    private static Itemset delN(Itemset I, int N) {
+        Itemset ret = new Itemset(I);
+        ret.remove(N);
+        return ret;
+    }
 }

@@ -98,7 +98,7 @@ public class Dataset {
 
         private LabelGenerator() {
             this.tokenToLabelMap = new HashMap<>();
-            this.labelGenerator = makeIntGenerator();
+            this.labelGenerator = makeIntGenerator(1);
         }
 
         private LabelGenerator(Map<String, Integer> labels) {
@@ -106,7 +106,7 @@ public class Dataset {
             this.labelGenerator = makeIntGenerator(labels.size());
         }
 
-        private Integer getLabel(String token) {
+        protected Integer getLabel(String token) {
             if (!tokenToLabelMap.containsKey(token)) {
                 tokenToLabelMap.putIfAbsent(token, labelGenerator.get());
             }
@@ -125,12 +125,32 @@ public class Dataset {
             return new HashSet<>(tokenToLabelMap.values());
         }
     }
+    
+    /*
+     * Returns a dataset generated from a file where all data values are 
+     * integers. Throws NumberFormatException if not all data points are integers. 
+     */
+    private static class IntegerLabelGenerator extends LabelGenerator {
+        @Override
+        protected Integer getLabel(String token) {
+            return Integer.parseInt(token);
+        }
+    }
 
     /*
      * Returns a dataset generated from a file without assumed prior labels
      */
     public static Dataset fromFile(Path path, FileFormat format) throws IOException {
         LabelGenerator tableLabelGenerator = new LabelGenerator();
+        LabelGenerator headerLabelGenerator = new LabelGenerator();
+        return fromFile(path, format, tableLabelGenerator, headerLabelGenerator);
+    }
+    
+    /*
+     * Returns a dataset generated from a file without assumed prior labels
+     */
+    public static Dataset fromIntegerFile(Path path, FileFormat format) throws IOException {
+        LabelGenerator tableLabelGenerator = new IntegerLabelGenerator();
         LabelGenerator headerLabelGenerator = new LabelGenerator();
         return fromFile(path, format, tableLabelGenerator, headerLabelGenerator);
     }
@@ -390,7 +410,7 @@ public class Dataset {
         return tableLabelGenerator.getLabelToTokenMap().get(attr);
     }
     
-    public Set<Integer> getValueRangeSet() {
+    public SortedSet<Integer> getValueRangeSet() {
         return valueRangeSet;
     }
 
