@@ -125,7 +125,6 @@ public class TTree {
     private void genLevel(Node[] ref, int end, Itemset I) {        
         for (int i = 1; i < end; i++) {
             if (ref[i] != null) {
-                //TODO: Does this need to copy or not!?
                 Itemset newI = append(i, I);
                 if (testCombinations(newI)) {
                     if (ref[end].chdRef == null) {
@@ -214,4 +213,5 @@ public class TTree {
         ret.remove(N);
         return ret;
     }
+
 }

@@ -2,10 +2,13 @@ package HelperObjects;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class Itemset {
 
+    public static final Itemset EMPTY = new Itemset(Collections.emptyList());
+    
     private List<Integer> items;
 
     public Itemset(Collection<Integer> c) {
@@ -41,9 +44,13 @@ public class Itemset {
     public Integer remove(int n) {
         return items.remove(n);
     }
-
-    public boolean equals(List<Integer> r) {
-        return items.equals(r);
+    
+    public boolean equals(Itemset r) {
+        return equals(items, r.items);
+    }
+    
+    public boolean isEmpty() {
+        return items.isEmpty();
     }
 
     public boolean greaterThan(Itemset r) {
@@ -68,6 +75,11 @@ public class Itemset {
     public boolean containedBy(Itemset r) {
         return contains(r.items, items);
     }
+    
+    @Override
+    public String toString() {
+        return items.toString();
+    }
 
     private static boolean contains(List<Integer> l1, List<Integer> l2) {
         if (l2.isEmpty()) {
@@ -84,8 +96,10 @@ public class Itemset {
         int l2Size = l2.size();
 
         while (i < l1Size && j < l2Size) {
-            if (r < s && ++i < l1Size) {
-                r = l1.get(i);
+            if (r < s) {
+                if (++i < l1Size) {
+                    r = l1.get(i);
+                }
             } else if (r > s) {
                 return false;
             } else if (++j < l2Size && ++i < l1Size) {
@@ -96,19 +110,50 @@ public class Itemset {
         return j == l2Size;
     }
 
-    public Itemset del1() {
-        Itemset is = new Itemset(this);
-        is.items.remove(0);
-        return is;
+    public static Itemset del1(Itemset is) {
+        Itemset ret = new Itemset(is);
+        ret.items.remove(0);
+        return ret;
     }
     
-    public Itemset delN(Itemset I1, Itemset I2) {
+    public static Itemset delN(Itemset is, Itemset rem) {
+        Itemset ret = new Itemset(is);
+        ret.removeLeadingSubstring(rem.items);
+        return ret;
+    }
+    
+    public static Itemset lss(Itemset I1, Itemset I2) {
         Itemset ret = new Itemset(I1);
-        I1.removeLeadingSubtring(I2.items);
+        ret.items = getLeadingSubstring(ret.items, I2.items);
         return ret;
     }
 
-    private void removeLeadingSubtring(List<Integer> r) {
+    private static List<Integer> getLeadingSubstring(List<Integer> l1, List<Integer> l2) {
+        List<Integer> ret = new ArrayList<>();
+        
+        if (l1.isEmpty() || l2.isEmpty()) {
+            return ret;
+        }
+        
+        int i = 0;
+        int size = Math.min(l1.size(), l2.size());
+        
+        while (i < size) {
+            int r = l1.get(i);
+            int s = l2.get(i);
+            if (r == s) {
+                ret.add(r);
+                i++;
+            }
+            else {
+                break;
+            }
+        }
+        
+        return ret;
+    }
+
+    private void removeLeadingSubstring(List<Integer> r) {
         if (r.isEmpty()) {
             return;
         }
@@ -119,5 +164,20 @@ public class Itemset {
             items.remove(0);
             i++;
         }
+    }
+    
+    private static boolean equals(List<Integer> l1, List<Integer> l2) {
+        int size = l1.size();
+        if (size != l2.size()) {
+            return false;
+        }
+        
+        for (int i = 0; i < size; i++) {
+            if (!l1.get(i).equals(l2.get(i))) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 }
