@@ -6,11 +6,12 @@ import java.util.List;
 
 import HelperObjects.Dataset;
 import HelperObjects.Dataset.FileFormat;
+import HelperObjects.Rule;
 
 public class TTreeDemo {
 	public static void main(String[] args) throws IOException {
 		// TODO Auto-generated method stub
-		Dataset dataset = Dataset.fromIntegerFile(Paths.get("data-test"), FileFormat.SPACE_SEPARATED);
+		Dataset dataset = Dataset.fromFile(Paths.get("data1"), FileFormat.SPACE_SEPARATED);
 		
 		for(List<Integer> row : dataset.getTable()) {
 			for(Integer cell : row) {
@@ -18,8 +19,13 @@ public class TTreeDemo {
 			}
 			System.out.println();
 		}
-		
-		TTree tree = new TTree(dataset, convertToIntegerNumerator(0.35, dataset.getTable().size()));
+
+		/**	Temporary values for minSupport and minConfidence = {0.25, 0.4}. In the future, we will be taking in these
+		 * 	values from the user.
+		 * 	*/
+		int tableSize = dataset.getTable().size();
+		TTree tree = new TTree(dataset, convertToIntegerNumerator(0.25, tableSize));
+		List<Rule> rules = tree.generateRules(convertToIntegerNumerator(0.4, tableSize));
 	}
 
 	private static int convertToIntegerNumerator(double d, int size) {
