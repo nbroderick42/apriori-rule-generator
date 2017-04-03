@@ -18,7 +18,9 @@ public class Rule {
 
     @Override
     public String toString() {
-        return antecedent + " -> " + consequent;
+        return antecedent + " -> " + consequent +
+                "\n\tSupport:\t" + sup +
+                "\n\tConfidence:\t" + conf;
     }
 
 }

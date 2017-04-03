@@ -25,7 +25,8 @@ public class TTreeDemo {
 		 * 	*/
 		int tableSize = dataset.getTable().size();
 		TTree tree = new TTree(dataset, convertToIntegerNumerator(0.25, tableSize));
-		List<Rule> rules = tree.generateRules(convertToIntegerNumerator(0.4, tableSize));
+		List<Rule> rules = tree.generateRules(0.4);
+		System.out.println(rules);
 	}
 
 	private static int convertToIntegerNumerator(double d, int size) {

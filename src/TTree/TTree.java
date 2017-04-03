@@ -35,6 +35,9 @@ public class TTree implements RuleGenerator {
         private Node[] chdRef;
 
         public boolean hasChildren() {
+            if(chdRef == null) {
+                return false;
+            }
             for (Node n : this.chdRef) {
                 if (n != null) {
                     return true;
@@ -186,7 +189,7 @@ public class TTree implements RuleGenerator {
             return null;
         } else {
             int next = I.get(k);
-            if (ref[next] != null) {
+            if (next < ref.length && ref[next] != null) {
                 return findInTtree(I, k - 1, ref[next].chdRef, ref[next]);
             } else {
                 return null;
@@ -242,7 +245,9 @@ public class TTree implements RuleGenerator {
                  * construct rules involving ourselves
                  */
                 path.add(i);
-                rules.addAll(generatePartitions(confidence, path));
+                if(path.size() > 1) {
+                    rules.addAll(generatePartitions(confidence, path));
+                }
 
                 /**
                  * If we have children, then we need to generate rules including
@@ -263,10 +268,10 @@ public class TTree implements RuleGenerator {
     private List<Rule> generatePartitions(double minConf, List<Integer> path) {
         long field = 1;
         long max = 1 << (path.size() - 1);
-        
+
         double unionSup = findInTtree(new ItemSet(path)).sup;
         List<Rule> result = new ArrayList<>();
-        
+
         while (field < max) {
             ItemSet antecedent = new ItemSet();
             ItemSet consequent = new ItemSet();
@@ -278,13 +283,13 @@ public class TTree implements RuleGenerator {
                     consequent.append(path.get(j));
                 }
             }
-            
+
             int anteSup = findInTtree(antecedent).sup;
             int consSup = findInTtree(consequent).sup;
-            
+
             double anteConf = unionSup / anteSup;
             double consConf = unionSup / consSup;
-            
+
             if (anteConf > minConf) {
                 result.add(new Rule(antecedent, consequent, unionSup, anteConf));
             }
@@ -292,7 +297,7 @@ public class TTree implements RuleGenerator {
                 result.add(new Rule(consequent, antecedent, unionSup, consConf));
             }
         }
-        
+
         return result;
     }
 }
