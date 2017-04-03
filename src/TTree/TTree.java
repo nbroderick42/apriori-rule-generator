@@ -267,14 +267,17 @@ public class TTree implements RuleGenerator {
 
     private List<Rule> generatePartitions(double minConf, List<Integer> path) {
         assert path.size() >= 2 : "Need at least two elements in path";
+        assert path.size() <= 64: "generatePartitions can't support tables with > 64 values!";
         
         double unionSup = findInTtree(new ItemSet(path)).sup;
         List<Rule> result = new ArrayList<>();
-
-        for (long field = 1; field < 1 << (path.size() - 1); field++) {
+        
+        int max = 1 << (path.size() - 1);
+        
+        for (long field = 1; field < max; field++) {
             ItemSet antecedent = new ItemSet();
             ItemSet consequent = new ItemSet();
-            for (int i = 1, j = 0; j < path.size(); i <<= 1, j++) {
+            for (int i = 1, j = 0; i < max << 1; i <<= 1, j++) {
                 if ((i & field) == 0) {
                     antecedent.append(path.get(j));
                 }
