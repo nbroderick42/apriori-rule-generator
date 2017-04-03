@@ -134,15 +134,15 @@ public class TTree implements RuleGenerator {
             }
         }
     }
-
-    private void genLevel(Node[] ref, int end, ItemSet I) {
-        ref[end].chdRef = new Node[end];
-
+    
+    private void genLevel(Node[] ref, int end, ItemSet I) {        
         for (int i = 1; i < end; i++) {
             if (ref[i] != null) {
-                // TODO: Does this need to copy or not!?
                 ItemSet newI = append(i, I);
                 if (testCombinations(newI)) {
+                    if (ref[end].chdRef == null) {
+                        ref[end].chdRef = new Node[end];
+                    }
                     ref[end].chdRef[i] = new Node();
                     isNewLevel = true;
                 } else {
@@ -302,4 +302,5 @@ public class TTree implements RuleGenerator {
 
         return result;
     }
+    
 }
