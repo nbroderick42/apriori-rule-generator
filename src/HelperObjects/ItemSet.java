@@ -5,34 +5,73 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class Itemset {
+public class ItemSet {
 
-    public static final Itemset EMPTY = new Itemset(Collections.emptyList());
-    
+    public static final ItemSet EMPTY = new ItemSet(Collections.emptyList());
+
     private List<Integer> items;
 
-    public Itemset(Collection<Integer> c) {
+    public ItemSet(Collection<Integer> c) {
         items = new ArrayList<>(c);
+        Collections.sort(items);
     }
 
-    public Itemset() {
+    public ItemSet() {
         items = new ArrayList<>();
     }
 
-    public Itemset(Itemset is) {
+    public ItemSet(ItemSet is) {
         items = new ArrayList<>(is.items);
+    }
+
+    public List<Integer> getItems() {
+        return items;
     }
 
     public Integer get(int idx) {
         return items.get(idx);
     }
 
-    public Itemset append(int i) {
-        items.add(i);
+    public ItemSet append(int i) {
+        int idx = getInsertionIndex(items, i);
+        if (idx >= 0) {
+            System.out.println("Cannot have duplicates in ItemSet");
+        }
+        else {
+            items.add(-idx - 1, i);
+        }
         return this;
     }
 
-    public Itemset append(Itemset is) {
+    // By Dr. Srinivas Sampalli
+    private int getInsertionIndex(List<Integer> elements, int i) {
+        if (elements.size() == 0) {
+            return -1;
+        }
+
+        int lo = 0, hi = elements.size() - 1, mid = 0, c = 0;
+
+        while (lo <= hi) {
+            mid = (lo + hi) / 2;
+            c = i - elements.get(mid);
+            if (c == 0) {
+                return mid;
+            }
+            if (c < 0) {
+                hi = mid - 1;
+            }
+            if (c > 0) {
+                lo = mid + 1;
+            }
+        }
+
+        if (c < 0)
+            return (-mid - 1);
+        else
+            return (-mid - 2);
+    }
+
+    public ItemSet append(ItemSet is) {
         is.items.forEach(this::append);
         return this;
     }
@@ -44,16 +83,16 @@ public class Itemset {
     public Integer remove(int n) {
         return items.remove(n);
     }
-    
-    public boolean equals(Itemset r) {
+
+    public boolean equals(ItemSet r) {
         return equals(items, r.items);
     }
-    
+
     public boolean isEmpty() {
         return items.isEmpty();
     }
 
-    public boolean greaterThan(Itemset r) {
+    public boolean greaterThan(ItemSet r) {
         int i;
         for (i = 0; i < r.size() && i < items.size(); i++) {
             int si = items.get(i);
@@ -68,14 +107,14 @@ public class Itemset {
         return i < r.size();
     }
 
-    public boolean contains(Itemset r) {
+    public boolean contains(ItemSet r) {
         return contains(items, r.items);
     }
 
-    public boolean containedBy(Itemset r) {
+    public boolean containedBy(ItemSet r) {
         return contains(r.items, items);
     }
-    
+
     @Override
     public String toString() {
         return items.toString();
@@ -110,46 +149,45 @@ public class Itemset {
         return j == l2Size;
     }
 
-    public static Itemset del1(Itemset is) {
-        Itemset ret = new Itemset(is);
+    public static ItemSet del1(ItemSet is) {
+        ItemSet ret = new ItemSet(is);
         ret.items.remove(0);
         return ret;
     }
-    
-    public static Itemset delN(Itemset is, Itemset rem) {
-        Itemset ret = new Itemset(is);
+
+    public static ItemSet delN(ItemSet is, ItemSet rem) {
+        ItemSet ret = new ItemSet(is);
         ret.removeLeadingSubstring(rem.items);
         return ret;
     }
-    
-    public static Itemset lss(Itemset I1, Itemset I2) {
-        Itemset ret = new Itemset(I1);
+
+    public static ItemSet lss(ItemSet I1, ItemSet I2) {
+        ItemSet ret = new ItemSet(I1);
         ret.items = getLeadingSubstring(ret.items, I2.items);
         return ret;
     }
 
     private static List<Integer> getLeadingSubstring(List<Integer> l1, List<Integer> l2) {
         List<Integer> ret = new ArrayList<>();
-        
+
         if (l1.isEmpty() || l2.isEmpty()) {
             return ret;
         }
-        
+
         int i = 0;
         int size = Math.min(l1.size(), l2.size());
-        
+
         while (i < size) {
             int r = l1.get(i);
             int s = l2.get(i);
             if (r == s) {
                 ret.add(r);
                 i++;
-            }
-            else {
+            } else {
                 break;
             }
         }
-        
+
         return ret;
     }
 
@@ -157,7 +195,7 @@ public class Itemset {
         if (r.isEmpty()) {
             return;
         }
-        
+
         int i = 0;
         while (i < r.size() && !items.isEmpty()) {
             assert r.get(0).equals(items.get(0)) : "removeLeadingSubtring call with r not a leading substring of items";
@@ -165,19 +203,19 @@ public class Itemset {
             i++;
         }
     }
-    
+
     private static boolean equals(List<Integer> l1, List<Integer> l2) {
         int size = l1.size();
         if (size != l2.size()) {
             return false;
         }
-        
+
         for (int i = 0; i < size; i++) {
             if (!l1.get(i).equals(l2.get(i))) {
                 return false;
             }
         }
-        
+
         return true;
     }
 }

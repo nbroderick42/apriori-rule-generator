@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import HelperObjects.Dataset;
-import HelperObjects.Itemset;
+import HelperObjects.ItemSet;
 
 /**
  * Created by Jonathan McDevitt on 2017-03-24.
@@ -39,9 +39,9 @@ public class PTree {
             return chdRef != null;
         }
 
-        abstract Itemset getI();
+        abstract ItemSet getI();
 
-        abstract void setI(Itemset I);
+        abstract void setI(ItemSet I);
 
         abstract Node getSibRef();
 
@@ -57,8 +57,8 @@ public class PTree {
         }
 
         @Override
-        protected Itemset getI() {
-            return Itemset.EMPTY;
+        protected ItemSet getI() {
+            return ItemSet.EMPTY;
         }
 
         @Override
@@ -72,7 +72,7 @@ public class PTree {
         }
 
         @Override
-        protected void setI(Itemset I) {
+        protected void setI(ItemSet I) {
             throw new UnsupportedOperationException("Cannot set itemset of PTree.NodeTop");
         }
 
@@ -89,20 +89,20 @@ public class PTree {
     }
 
     private static class NodeInternal extends Node {
-        private Itemset I;
+        private ItemSet I;
         private Node sibRef;
 
-        private NodeInternal(Itemset I, int sup) {
+        private NodeInternal(ItemSet I, int sup) {
             this.I = I;
             this.sup = sup;
         }
 
-        private NodeInternal(Itemset I) {
+        private NodeInternal(ItemSet I) {
             this.I = I;
         }
 
         @Override
-        public Itemset getI() {
+        public ItemSet getI() {
             return I;
         }
 
@@ -112,7 +112,7 @@ public class PTree {
         }
 
         @Override
-        protected void setI(Itemset I) {
+        protected void setI(ItemSet I) {
             this.I = I;
         }
 
@@ -164,7 +164,7 @@ public class PTree {
     private void addToPtreeTopLevel(List<Integer> r) {
         r = new ArrayList<Integer>(r);
         Collections.sort(r);
-        Itemset is = new Itemset(r);
+        ItemSet is = new ItemSet(r);
 
         int r0 = r.get(0);
         if (start[r0] == null) {
@@ -174,11 +174,11 @@ public class PTree {
         }
 
         if (r.size() > 1) {
-            addToPtree(LinkFlag.CHILD, start[r0].chdRef, Itemset.del1(is), start[r0]);
+            addToPtree(LinkFlag.CHILD, start[r0].chdRef, ItemSet.del1(is), start[r0]);
         }
     }
 
-    private void addToPtree(LinkFlag f, Node ref, Itemset r, Node oldRef) {
+    private void addToPtree(LinkFlag f, Node ref, ItemSet r, Node oldRef) {
         if (ref == null) {
             Node newRef = new NodeInternal(r, 1);
             f.link(oldRef, newRef);
@@ -207,30 +207,30 @@ public class PTree {
         }
     }
 
-    private void parent(LinkFlag f, Node ref, Itemset r, Node oldRef) {
+    private void parent(LinkFlag f, Node ref, ItemSet r, Node oldRef) {
         NodeInternal newRef = new NodeInternal(r, ref.sup + 1);
         newRef.chdRef = ref;
         f.link(newRef, oldRef);
-        ref.setI(Itemset.delN(ref.getI(), r));
+        ref.setI(ItemSet.delN(ref.getI(), r));
         moveSiblings(ref, newRef);
     }
 
-    private void child(Node ref, Itemset r) {
+    private void child(Node ref, ItemSet r) {
         ref.incSup();
         if (!ref.hasChild()) {
-            NodeInternal newRef = new NodeInternal(Itemset.delN(r, ref.getI()), 1);
+            NodeInternal newRef = new NodeInternal(ItemSet.delN(r, ref.getI()), 1);
             ref.setChdRef(newRef);
         } else {
-            addToPtree(LinkFlag.CHILD, ref.getChdRef(), Itemset.delN(r, ref.getI()), ref);
+            addToPtree(LinkFlag.CHILD, ref.getChdRef(), ItemSet.delN(r, ref.getI()), ref);
         }
     }
 
-    private void eldSib(LinkFlag f, Node ref, Itemset r, Node oldRef) {
-        Itemset lss = Itemset.lss(r, ref.getI());
+    private void eldSib(LinkFlag f, Node ref, ItemSet r, Node oldRef) {
+        ItemSet lss = ItemSet.lss(r, ref.getI());
         if (!lss.isEmpty() && !lss.equals(oldRef.getI())) {
             NodeInternal newPref = new NodeInternal(lss, ref.getSup() + 1);
             f.link(newPref, oldRef);
-            r = Itemset.delN(r, lss);
+            r = ItemSet.delN(r, lss);
             newPref.setChdRef(new NodeInternal(r, 1));
             newPref.getChdRef().setSibRef(ref);
             moveSiblings(ref, newPref);
@@ -241,7 +241,7 @@ public class PTree {
         }
     }
 
-    private void yngSib(LinkFlag f, Node ref, Itemset r, Node oldRef) {
+    private void yngSib(LinkFlag f, Node ref, ItemSet r, Node oldRef) {
         if (!ref.hasSiblings()) {
             yngSib1(f, ref, r, oldRef);
         } else {
@@ -249,25 +249,25 @@ public class PTree {
         }
     }
 
-    private void yngSib1(LinkFlag f, Node ref, Itemset r, Node oldRef) {
-        Itemset lss = Itemset.lss(r, ref.getI());
+    private void yngSib1(LinkFlag f, Node ref, ItemSet r, Node oldRef) {
+        ItemSet lss = ItemSet.lss(r, ref.getI());
         if (!lss.isEmpty() && !lss.equals(oldRef.getI())) {
             NodeInternal newPref = new NodeInternal(lss, ref.getSup() + 1);
             f.link(newPref, oldRef);
-            ref.setI(Itemset.delN(ref.getI(), lss));
+            ref.setI(ItemSet.delN(ref.getI(), lss));
             newPref.setChdRef(ref);
-            ref.setSibRef(new NodeInternal(Itemset.delN(r, lss), 1));
+            ref.setSibRef(new NodeInternal(ItemSet.delN(r, lss), 1));
         } else {
             ref.setSibRef(new NodeInternal(r, 1));
         }
     }
 
-    private void yngSib2(LinkFlag f, Node ref, Itemset r, Node oldRef) {
-        Itemset lss = Itemset.lss(r, ref.getI());
+    private void yngSib2(LinkFlag f, Node ref, ItemSet r, Node oldRef) {
+        ItemSet lss = ItemSet.lss(r, ref.getI());
         if (!lss.isEmpty() && !lss.equals(oldRef.getI())) {
             NodeInternal newPref = new NodeInternal(lss, ref.getSup() + 1);
             f.link(newPref, oldRef);
-            ref.setI(Itemset.delN(ref.getI(), lss));
+            ref.setI(ItemSet.delN(ref.getI(), lss));
             newPref.setChdRef(ref);
             Node tempRef = ref.getSibRef();
             ref.setSibRef(new NodeInternal(r, 1));
