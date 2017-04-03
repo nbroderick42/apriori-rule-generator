@@ -1,6 +1,7 @@
 package HelperObjects;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -15,6 +16,11 @@ public class ItemSet {
     public ItemSet(ItemSet is) {
         items = new ArrayList<>(is.items);
         Collections.sort(items);
+    }
+
+    public ItemSet(Collection<Integer> items) {
+        this.items = new ArrayList<>(items);
+        Collections.sort(this.items);
     }
 
     public List<Integer> getItems() {

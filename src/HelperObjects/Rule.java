@@ -9,7 +9,7 @@ public class Rule {
     private double sup;
     private double conf;
 
-    private Rule(ItemSet antecedent, ItemSet consequent, double sup, double conf) {
+    public Rule(ItemSet antecedent, ItemSet consequent, double sup, double conf) {
         this.antecedent = antecedent;
         this.consequent = consequent;
         this.sup = sup;

@@ -137,7 +137,7 @@ public class TTree implements RuleGenerator {
 
         for (int i = 1; i < end; i++) {
             if (ref[i] != null) {
-                //TODO: Does this need to copy or not!?
+                // TODO: Does this need to copy or not!?
                 ItemSet newI = append(i, I);
                 if (testCombinations(newI)) {
                     ref[end].chdRef[i] = new Node();
@@ -163,7 +163,7 @@ public class TTree implements RuleGenerator {
     private boolean combinations(ItemSet I, int start, int end, ItemSet I1, ItemSet I2) {
         if (end > I2.size()) {
             ItemSet testSet = append(I, I1);
-            return findInTtree(testSet);
+            return findInTtree(testSet) != null;
         } else {
             for (int i = start; i < end; i++) {
                 ItemSet tempSet = append(I2.get(i), I);
@@ -175,21 +175,21 @@ public class TTree implements RuleGenerator {
         return true;
     }
 
-    private boolean findInTtree(ItemSet I) {
-        return findInTtree(I, I.size() - 1, start);
+    private Node findInTtree(ItemSet I) {
+        return findInTtree(I, I.size() - 1, start, null);
     }
 
-    private boolean findInTtree(ItemSet I, int k, Node[] ref) {
-        if (k > 0) {
-            return true;
+    private Node findInTtree(ItemSet I, int k, Node[] ref, Node prev) {
+        if (k < 0) {
+            return prev;
         } else if (ref == null) {
-            return false;
+            return null;
         } else {
             int next = I.get(k);
             if (ref[next] != null) {
-                return findInTtree(I, k - 1, ref[next].chdRef);
+                return findInTtree(I, k - 1, ref[next].chdRef, ref[next]);
             } else {
-                return false;
+                return null;
             }
         }
     }
@@ -226,26 +226,33 @@ public class TTree implements RuleGenerator {
 
     List<Rule> generateRules(double confidence, Node[] layer, List<Integer> path, int level) {
         List<Rule> rules = new ArrayList<>();
-        for(int i = 0; i < layer.length; i++) {
+        for (int i = 0; i < layer.length; i++) {
             /** If we are at the beginning, initialize the path */
-            if(path == null) {
+            if (path == null) {
                 path = new ArrayList<>();
             }
             Node n = layer[i];
-            /** If our value is not null, then we can begin to evaluate as a tree   */
-            if(n != null) {
+            /**
+             * If our value is not null, then we can begin to evaluate as a tree
+             */
+            if (n != null) {
 
-                /** If we are not null, then we can add ourselves to the path and construct rules involving ourselves
-                 *  */
+                /**
+                 * If we are not null, then we can add ourselves to the path and
+                 * construct rules involving ourselves
+                 */
                 path.add(i);
                 rules.addAll(generatePartitions(confidence, path));
 
-                /** If we have children, then we need to generate rules including these children    */
-                if(n.hasChildren()) {
+                /**
+                 * If we have children, then we need to generate rules including
+                 * these children
+                 */
+                if (n.hasChildren()) {
                     rules.addAll(generateRules(confidence, n.chdRef, path, level + 1));
                 }
-                /** Clear the path before moving to the next node   */
-                for(int j = path.size()-1; j >= level; j--) {
+                /** Clear the path before moving to the next node */
+                for (int j = path.size() - 1; j >= level; j--) {
                     path.remove(j);
                 }
             }
@@ -253,7 +260,39 @@ public class TTree implements RuleGenerator {
         return rules;
     }
 
-    private List<Rule> generatePartitions(double confidence, List<Integer> path) {
-        return new ArrayList<>();
+    private List<Rule> generatePartitions(double minConf, List<Integer> path) {
+        long field = 1;
+        long max = 1 << (path.size() - 1);
+        
+        double unionSup = findInTtree(new ItemSet(path)).sup;
+        List<Rule> result = new ArrayList<>();
+        
+        while (field < max) {
+            ItemSet antecedent = new ItemSet();
+            ItemSet consequent = new ItemSet();
+            for (int i = 1, j = 0; i < max; i <<= 1, j++) {
+                if ((i & field) == 0) {
+                    antecedent.append(path.get(j));
+                }
+                else {
+                    consequent.append(path.get(j));
+                }
+            }
+            
+            int anteSup = findInTtree(antecedent).sup;
+            int consSup = findInTtree(consequent).sup;
+            
+            double anteConf = unionSup / anteSup;
+            double consConf = unionSup / consSup;
+            
+            if (anteConf > minConf) {
+                result.add(new Rule(antecedent, consequent, unionSup, anteConf));
+            }
+            if (anteConf > minConf) {
+                result.add(new Rule(consequent, antecedent, unionSup, consConf));
+            }
+        }
+        
+        return result;
     }
 }
