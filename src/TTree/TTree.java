@@ -255,8 +255,9 @@ public class TTree implements RuleGenerator {
     private List<Rule> generatePartitions(double minConf, List<Integer> path) {
         assert path.size() >= 2 : "Need at least two elements in path";
         assert path.size() <= 64: "generatePartitions can't support tables with > 64 values!";
-        
-        double unionSup = findInTtree(new ItemSet(path)).sup;
+
+        int datasetSize = dataset.getTable().size();
+        double unionSup = (double)findInTtree(new ItemSet(path)).sup / (double) datasetSize;
         List<Rule> result = new ArrayList<>();
         
         int max = 1 << (path.size() - 1);
@@ -273,8 +274,8 @@ public class TTree implements RuleGenerator {
                 }
             }
 
-            int anteSup = findInTtree(antecedent).sup;
-            int consSup = findInTtree(consequent).sup;
+            double anteSup = (double) findInTtree(antecedent).sup / datasetSize;
+            double consSup = (double) findInTtree(consequent).sup / datasetSize;
 
             double anteConf = unionSup / anteSup;
             double consConf = unionSup / consSup;
@@ -282,7 +283,7 @@ public class TTree implements RuleGenerator {
             if (anteConf > minConf) {
                 result.add(new Rule(antecedent, consequent, unionSup, anteConf));
             }
-            if (anteConf > minConf) {
+            if (consConf > minConf) {
                 result.add(new Rule(consequent, antecedent, unionSup, consConf));
             }
         }
