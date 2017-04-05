@@ -6,131 +6,16 @@ import java.util.List;
 
 import HelperObjects.Dataset;
 import HelperObjects.ItemSet;
+import HelperObjects.Rule;
+import HelperObjects.RuleGenerator;
 
 /**
  * Created by Jonathan McDevitt on 2017-03-24.
  */
-public class PTree {
+public class PTree implements RuleGenerator{
 
     private Dataset dataset;
     private NodeTop[] start;
-
-    private static abstract class Node {
-        protected int sup;
-        protected Node chdRef;
-
-        protected int getSup() {
-            return sup;
-        }
-
-        protected Node getChdRef() {
-            return chdRef;
-        }
-
-        protected void setChdRef(Node chdRef) {
-            this.chdRef = chdRef;
-        }
-
-        protected void incSup() {
-            sup++;
-        }
-
-        protected boolean hasChild() {
-            return chdRef != null;
-        }
-
-        abstract ItemSet getI();
-
-        abstract void setI(ItemSet I);
-
-        abstract Node getSibRef();
-
-        abstract void setSibRef(Node sibRef);
-
-        abstract boolean hasSiblings();
-    }
-
-    private static class NodeTop extends Node {
-
-        private NodeTop() {
-            sup = 1;
-        }
-
-        @Override
-        protected ItemSet getI() {
-            return ItemSet.EMPTY;
-        }
-
-        @Override
-        protected Node getSibRef() {
-            return null;
-        }
-
-        @Override
-        protected void setSibRef(Node sibRef) {
-            throw new UnsupportedOperationException("Cannot set sibRef of PTree.NodeTop");
-        }
-
-        @Override
-        protected void setI(ItemSet I) {
-            throw new UnsupportedOperationException("Cannot set itemset of PTree.NodeTop");
-        }
-
-        @Override
-        protected boolean hasSiblings() {
-            return false;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("{ sup: %d }", sup);
-        }
-
-    }
-
-    private static class NodeInternal extends Node {
-        private ItemSet I;
-        private Node sibRef;
-
-        private NodeInternal(ItemSet I, int sup) {
-            this.I = I;
-            this.sup = sup;
-        }
-
-        private NodeInternal(ItemSet I) {
-            this.I = I;
-        }
-
-        @Override
-        public ItemSet getI() {
-            return I;
-        }
-
-        @Override
-        public Node getSibRef() {
-            return sibRef;
-        }
-
-        @Override
-        protected void setI(ItemSet I) {
-            this.I = I;
-        }
-
-        @Override
-        boolean hasSiblings() {
-            return sibRef != null;
-        }
-
-        @Override
-        protected void setSibRef(Node sibRef) {
-            this.sibRef = sibRef;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("{ sup: %d, I: %s }", sup, I.toString());
-        }
-    }
 
     private enum LinkFlag {
         CHILD {
@@ -145,8 +30,8 @@ public class PTree {
                 n1.setSibRef(n2);
             }
         };
-
         public abstract void link(Node n1, Node n2);
+
     }
 
     public PTree(Dataset dataset) {
@@ -155,14 +40,13 @@ public class PTree {
 
         createPtree();
     }
-
     private void createPtree() {
         List<List<Integer>> R = dataset.getTable();
         R.forEach(this::addToPtreeTopLevel);
     }
 
     private void addToPtreeTopLevel(List<Integer> r) {
-        r = new ArrayList<Integer>(r);
+        r = new ArrayList<>(r);
         Collections.sort(r);
         ItemSet is = new ItemSet(r);
 
@@ -283,6 +167,129 @@ public class PTree {
             to.setSibRef(from.getSibRef());
             from.setSibRef(null);
         }
+    }
+
+    private static abstract class Node {
+
+        protected int sup;
+        protected Node chdRef;
+        protected int getSup() {
+            return sup;
+        }
+
+        protected Node getChdRef() {
+            return chdRef;
+        }
+
+        protected void setChdRef(Node chdRef) {
+            this.chdRef = chdRef;
+        }
+
+        protected void incSup() {
+            sup++;
+        }
+
+        protected boolean hasChild() {
+            return chdRef != null;
+        }
+
+        abstract ItemSet getI();
+
+        abstract void setI(ItemSet I);
+
+        abstract Node getSibRef();
+
+        abstract void setSibRef(Node sibRef);
+
+        abstract boolean hasSiblings();
+
+    }
+    private static class NodeTop extends Node {
+
+        private NodeTop() {
+            sup = 1;
+        }
+
+        @Override
+        protected ItemSet getI() {
+            return ItemSet.EMPTY;
+        }
+
+        @Override
+        protected Node getSibRef() {
+            return null;
+        }
+
+        @Override
+        protected void setSibRef(Node sibRef) {
+            throw new UnsupportedOperationException("Cannot set sibRef of PTree.NodeTop");
+        }
+
+        @Override
+        protected void setI(ItemSet I) {
+            throw new UnsupportedOperationException("Cannot set itemset of PTree.NodeTop");
+        }
+
+        @Override
+        protected boolean hasSiblings() {
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("{ sup: %d }", sup);
+        }
+
+    }
+
+    private static class NodeInternal extends Node {
+
+        private ItemSet I;
+        private Node sibRef;
+        private NodeInternal(ItemSet I, int sup) {
+            this.I = I;
+            this.sup = sup;
+        }
+
+        private NodeInternal(ItemSet I) {
+            this.I = I;
+        }
+
+        @Override
+        public ItemSet getI() {
+            return I;
+        }
+
+        @Override
+        public Node getSibRef() {
+            return sibRef;
+        }
+
+        @Override
+        protected void setI(ItemSet I) {
+            this.I = I;
+        }
+
+        @Override
+        boolean hasSiblings() {
+            return sibRef != null;
+        }
+
+        @Override
+        protected void setSibRef(Node sibRef) {
+            this.sibRef = sibRef;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("{ sup: %d, I: %s }", sup, I.toString());
+        }
+
+    }
+
+    @Override
+    public List<Rule> generateRules(double confidence) {
+        return null;
     }
 
 }
