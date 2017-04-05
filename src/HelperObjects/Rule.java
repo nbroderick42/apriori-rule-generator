@@ -16,6 +16,22 @@ public class Rule {
         this.conf = conf;
     }
 
+    public ItemSet getAntecedent() {
+        return antecedent;
+    }
+
+    public ItemSet getConsequent() {
+        return consequent;
+    }
+
+    public double getSup() {
+        return sup;
+    }
+
+    public double getConf() {
+        return conf;
+    }
+
     @Override
     public String toString() {
         return antecedent + " -> " + consequent +

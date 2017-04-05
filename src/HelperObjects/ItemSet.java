@@ -161,6 +161,14 @@ public class ItemSet {
         return ret;
     }
 
+    public static ItemSet delN(ItemSet is, int j) {
+        ItemSet ret = new ItemSet(is);
+        while (j-- > 0) {
+            ret.items.remove(0);
+        }
+        return ret;
+    }
+    
     public static ItemSet lss(ItemSet I1, ItemSet I2) {
         ItemSet ret = new ItemSet(I1);
         ret.items = getLeadingSubstring(ret.items, I2.items);
@@ -217,5 +225,12 @@ public class ItemSet {
         }
 
         return true;
+    }
+
+    public static ItemSet doubleton(int i1, int i2) {
+        ItemSet ret = new ItemSet();
+        ret.append(i1);
+        ret.append(i2);
+        return ret;
     }
 }

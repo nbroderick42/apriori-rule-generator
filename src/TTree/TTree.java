@@ -139,10 +139,10 @@ public class TTree implements RuleGenerator {
         for (int i = 1; i < end; i++) {
             if (ref[i] != null) {
                 ItemSet newI = append(i, I);
+                if (ref[end].chdRef == null) {
+                    ref[end].chdRef = new Node[end];
+                }
                 if (testCombinations(newI)) {
-                    if (ref[end].chdRef == null) {
-                        ref[end].chdRef = new Node[end];
-                    }
                     ref[end].chdRef[i] = new Node();
                     isNewLevel = true;
                 } else {
@@ -157,8 +157,8 @@ public class TTree implements RuleGenerator {
             return true;
         }
 
-        ItemSet I1 = doubleton(I.get(1), I.get(0));
-        ItemSet I2 = delN(I, 2);
+        ItemSet I1 = ItemSet.doubleton(I.get(1), I.get(0));
+        ItemSet I2 = ItemSet.delN(I, 2);
 
         return combinations(new ItemSet(), 0, 2, I1, I2);
     }
@@ -209,19 +209,6 @@ public class TTree implements RuleGenerator {
         return ret;
     }
 
-    private static ItemSet doubleton(int i, int j) {
-        ItemSet ret = new ItemSet();
-        ret.append(i);
-        ret.append(j);
-        return ret;
-    }
-
-    private static ItemSet delN(ItemSet I, int N) {
-        ItemSet ret = new ItemSet(I);
-        ret.remove(N);
-        return ret;
-    }
-
     @Override
     public List<Rule> generateRules(double confidence) {
         return generateRules(confidence, start, null, 0);
@@ -268,8 +255,9 @@ public class TTree implements RuleGenerator {
     private List<Rule> generatePartitions(double minConf, List<Integer> path) {
         assert path.size() >= 2 : "Need at least two elements in path";
         assert path.size() <= 64: "generatePartitions can't support tables with > 64 values!";
-        
-        double unionSup = findInTtree(new ItemSet(path)).sup;
+
+        int datasetSize = dataset.getTable().size();
+        double unionSup = (double)findInTtree(new ItemSet(path)).sup / (double) datasetSize;
         List<Rule> result = new ArrayList<>();
         
         int max = 1 << (path.size() - 1);
@@ -286,8 +274,8 @@ public class TTree implements RuleGenerator {
                 }
             }
 
-            int anteSup = findInTtree(antecedent).sup;
-            int consSup = findInTtree(consequent).sup;
+            double anteSup = (double) findInTtree(antecedent).sup / datasetSize;
+            double consSup = (double) findInTtree(consequent).sup / datasetSize;
 
             double anteConf = unionSup / anteSup;
             double consConf = unionSup / consSup;
@@ -295,7 +283,7 @@ public class TTree implements RuleGenerator {
             if (anteConf > minConf) {
                 result.add(new Rule(antecedent, consequent, unionSup, anteConf));
             }
-            if (anteConf > minConf) {
+            if (consConf > minConf) {
                 result.add(new Rule(consequent, antecedent, unionSup, consConf));
             }
         }
