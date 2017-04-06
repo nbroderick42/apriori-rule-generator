@@ -281,10 +281,10 @@ public class TTree implements RuleGenerator {
             double consConf = unionSup / consSup;
 
             if (anteConf > minConf) {
-                result.add(new Rule(antecedent, consequent, unionSup, anteConf));
+                result.add(new Rule(dataset, antecedent, consequent, unionSup, anteConf));
             }
             if (consConf > minConf) {
-                result.add(new Rule(consequent, antecedent, unionSup, consConf));
+                result.add(new Rule(dataset, consequent, antecedent, unionSup, consConf));
             }
         }
 

@@ -74,6 +74,8 @@ public class Dataset {
     private Map<Integer, List<Integer>> valueRangeMap;
 
     private SortedSet<Integer> valueRangeSet;
+    
+    private Map<Integer, String> valueToHeaderTokenMap;
 
     private static final Function<Integer, Predicate<String[]>> hasCorrectNumberOfRows
             = rows -> (tks -> tks.length == rows);
@@ -349,7 +351,7 @@ public class Dataset {
     /*
      * Given an integer label, returns the String token for that label
      */
-    public String getHeaderToken(Integer label) {
+    public String getHeaderToken(int label) {
         return headerLabelGenerator.getLabelToTokenMap().get(label);
     }
 
@@ -400,10 +402,6 @@ public class Dataset {
      */
     public Set<Integer> getNonTargetAttributes(Integer targetIndex) {
         return attributeSet.stream().filter(i -> !i.equals(targetIndex)).collect(toSet());
-    }
-
-    public String getHeaderToken(int attr) {
-        return headerLabelGenerator.getLabelToTokenMap().get(attr);
     }
 
     public String getTableToken(int attr) {

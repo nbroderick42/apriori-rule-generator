@@ -6,7 +6,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class ItemSet {
-
+    
+    
     public static final ItemSet EMPTY = new ItemSet(Collections.emptyList());
 
     private List<Integer> items;

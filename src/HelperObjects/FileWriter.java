@@ -1,26 +1,23 @@
 package HelperObjects;
 
-import java.io.BufferedWriter;
+import static java.util.stream.Collectors.toList;
+
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
+
 
 /**
  * Created by Owner on 4/4/2017.
  */
 public class FileWriter {
     public static void writeRulesToFileFromList(List<Rule> rules, String filename) throws IOException {
-        BufferedWriter writer = new BufferedWriter(new java.io.FileWriter(filename));
-
-        StringBuilder sb;
-        for(Rule r : rules) {
-            sb = new StringBuilder();
-            sb.append(r.getAntecedent()).append(" --> ");
-            sb.append(r.getConsequent()).append("\n");
-            sb.append("\t");
-            sb.append("Support: ").append(r.getSup()).append("\n\t");
-            sb.append("Confidence: ").append(r.getConf()).append("\n");
-            writer.write(sb.toString());
-        }
-        writer.close();
+        Path out = Paths.get(filename);
+        Files.deleteIfExists(out);      
+        List<String> output = rules.stream().map(Rule::toString).collect(toList());
+        Files.write(out, output, StandardOpenOption.CREATE_NEW);
     }
 }
