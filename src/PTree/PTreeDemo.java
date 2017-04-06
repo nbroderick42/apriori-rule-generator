@@ -20,6 +20,6 @@ public class PTreeDemo {
         }
         
         PTree tree = new PTree(dataset);
-        System.out.println(tree);
+        System.out.println(tree.getLargestItemSetSize());
     }
 }

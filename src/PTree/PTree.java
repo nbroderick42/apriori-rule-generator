@@ -14,6 +14,11 @@ public class PTree implements RuleGenerator{
 
     private Dataset dataset;
     private NodeTop[] start;
+    private int largestItemSetSize;
+
+    public int getLargestItemSetSize() {
+        return largestItemSetSize;
+    }
 
     private enum LinkFlag {
         CHILD {
@@ -45,6 +50,13 @@ public class PTree implements RuleGenerator{
 
     private void addToPtreeTopLevel(List<Integer> r) {
         ItemSet is = new ItemSet(r);
+        
+        if (is.isEmpty()) {
+            return;
+        }
+        else if (largestItemSetSize == 0) {
+            largestItemSetSize = 1;
+        }
 
         int r0 = r.get(0);
         if (start[r0] == null) {
@@ -245,6 +257,7 @@ public class PTree implements RuleGenerator{
         private NodeInternal(ItemSet I, int sup) {
             this.I = I;
             this.sup = sup;
+            
         }
 
         private NodeInternal(ItemSet I) {
@@ -287,5 +300,10 @@ public class PTree implements RuleGenerator{
     public List<Rule> generateRules(double confidence) {
         return null;
     }
+    
+    public Dataset getDataset() {
+        return dataset;
+    }
+
 
 }
