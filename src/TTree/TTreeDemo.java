@@ -31,12 +31,17 @@ public class TTreeDemo {
 		 * 	values from the user.
 		 * 	*/
 		int tableSize = dataset.getTable().size();
-		TTree tree = new TTree(dataset, convertToIntegerNumerator(0.1, tableSize));
-		List<Rule> rules = tree.generateRules(0.4);
-
 		System.out.println("Please enter the name of the file you wish to write to.");
 		String toWrite = reader.readLine();
+
+		long start = System.currentTimeMillis();
+		TTree tree = new TTree(dataset, convertToIntegerNumerator(0.4, tableSize));
+		List<Rule> rules = tree.generateRules(0.6);
+
 		FileWriter.writeRulesToFileFromList(rules, toWrite);
+
+		long end = System.currentTimeMillis();
+		System.out.println("\n" + (end - start));
 	}
 
 	private static int convertToIntegerNumerator(double d, int size) {
