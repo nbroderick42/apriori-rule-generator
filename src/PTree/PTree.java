@@ -1,7 +1,5 @@
 package PTree;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import HelperObjects.Dataset;
@@ -20,17 +18,17 @@ public class PTree implements RuleGenerator{
     private enum LinkFlag {
         CHILD {
             @Override
-            public void link(Node n1, Node n2) {
-                n1.setChdRef(n2);
+            public void link(Node src, Node tgt) {
+                src.setChdRef(tgt);
             }
         },
         SIBLING {
             @Override
-            public void link(Node n1, Node n2) {
-                n1.setSibRef(n2);
+            public void link(Node src, Node tgt) {
+                src.setSibRef(tgt);
             }
         };
-        public abstract void link(Node n1, Node n2);
+        public abstract void link(Node src, Node tgt);
 
     }
 
@@ -46,8 +44,6 @@ public class PTree implements RuleGenerator{
     }
 
     private void addToPtreeTopLevel(List<Integer> r) {
-        r = new ArrayList<>(r);
-        Collections.sort(r);
         ItemSet is = new ItemSet(r);
 
         int r0 = r.get(0);
@@ -94,7 +90,7 @@ public class PTree implements RuleGenerator{
     private void parent(LinkFlag f, Node ref, ItemSet r, Node oldRef) {
         NodeInternal newRef = new NodeInternal(r, ref.sup + 1);
         newRef.chdRef = ref;
-        f.link(newRef, oldRef);
+        f.link(oldRef, newRef);
         ref.setI(ItemSet.delN(ref.getI(), r));
         moveSiblings(ref, newRef);
     }
@@ -113,7 +109,7 @@ public class PTree implements RuleGenerator{
         ItemSet lss = ItemSet.lss(r, ref.getI());
         if (!lss.isEmpty() && !lss.equals(oldRef.getI())) {
             NodeInternal newPref = new NodeInternal(lss, ref.getSup() + 1);
-            f.link(newPref, oldRef);
+            f.link(oldRef, newPref);
             r = ItemSet.delN(r, lss);
             newPref.setChdRef(new NodeInternal(r, 1));
             newPref.getChdRef().setSibRef(ref);
@@ -121,7 +117,7 @@ public class PTree implements RuleGenerator{
         } else {
             NodeInternal newSref = new NodeInternal(r);
             newSref.setSibRef(ref);
-            f.link(newSref, oldRef);
+            f.link(oldRef, newSref);
         }
     }
 
@@ -137,7 +133,7 @@ public class PTree implements RuleGenerator{
         ItemSet lss = ItemSet.lss(r, ref.getI());
         if (!lss.isEmpty() && !lss.equals(oldRef.getI())) {
             NodeInternal newPref = new NodeInternal(lss, ref.getSup() + 1);
-            f.link(newPref, oldRef);
+            f.link(oldRef, newPref);
             ref.setI(ItemSet.delN(ref.getI(), lss));
             newPref.setChdRef(ref);
             ref.setSibRef(new NodeInternal(ItemSet.delN(r, lss), 1));
@@ -150,7 +146,7 @@ public class PTree implements RuleGenerator{
         ItemSet lss = ItemSet.lss(r, ref.getI());
         if (!lss.isEmpty() && !lss.equals(oldRef.getI())) {
             NodeInternal newPref = new NodeInternal(lss, ref.getSup() + 1);
-            f.link(newPref, oldRef);
+            f.link(oldRef, newPref);
             ref.setI(ItemSet.delN(ref.getI(), lss));
             newPref.setChdRef(ref);
             Node tempRef = ref.getSibRef();

@@ -10,7 +10,6 @@ import HelperObjects.Dataset.FileFormat;
 public class PTreeDemo {
 
     public static void main(String[] args) throws IOException {
-        // TODO Auto-generated method stub
         Dataset dataset = Dataset.fromIntegerFile(Paths.get("data-test"), FileFormat.SPACE_SEPARATED);
 
         for(List<Integer> row : dataset.getTable()) {
@@ -19,8 +18,7 @@ public class PTreeDemo {
             }
             System.out.println();
         }
-
-        @SuppressWarnings("unused")
+        
         PTree tree = new PTree(dataset);
         System.out.println(tree);
     }
