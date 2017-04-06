@@ -1,9 +1,6 @@
 package HelperObjects;
 
-import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.collectingAndThen;
-import static java.util.stream.Collectors.counting;
-import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -13,22 +10,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.function.DoubleUnaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.IntStream;
 
 /*
  * Class used to represent the data with which to create
@@ -63,18 +56,8 @@ public class Dataset {
      */
     private LabelGenerator tableLabelGenerator;
 
-    /*
-     * A generator of integer labels for the headers of the data
-     */
-    private LabelGenerator headerLabelGenerator;
-
-    /*
-     * A map from each attribute to the possible values that attribute may have.
-     */
-    private Map<Integer, List<Integer>> valueRangeMap;
-
     private SortedSet<Integer> valueRangeSet;
-    
+
     private Map<Integer, String> valueToHeaderTokenMap;
 
     private static final Function<Integer, Predicate<String[]>> hasCorrectNumberOfRows
@@ -83,40 +66,37 @@ public class Dataset {
 
     private Dataset(List<List<Integer>> table, Set<Integer> attributeSet, List<List<Integer>> invertedTable,
             LabelGenerator tableLabelGenerator, LabelGenerator headerLabelGenerator,
-            Map<Integer, List<Integer>> valueRangeMap, SortedSet<Integer> valueRangeSet) {
+            Map<Integer, List<Integer>> valueRangeMap, SortedSet<Integer> valueRangeSet,
+            Map<Integer, String> valueToHeaderTokenMap) {
 
         this.table = table;
         this.attributeSet = attributeSet;
         this.invertedTable = invertedTable;
         this.tableLabelGenerator = tableLabelGenerator;
-        this.headerLabelGenerator = headerLabelGenerator;
-        this.valueRangeMap = valueRangeMap;
         this.valueRangeSet = valueRangeSet;
+        this.valueToHeaderTokenMap = valueToHeaderTokenMap;
     }
 
     private static class LabelGenerator {
+        private final int first;
         private Map<String, Integer> tokenToLabelMap;
         private Supplier<Integer> labelGenerator;
 
         private LabelGenerator() {
-            this.tokenToLabelMap = new HashMap<>();
-            this.labelGenerator = makeIntGenerator(1);
+            this(null, 0);
         }
 
-        private LabelGenerator(Map<String, Integer> labels) {
-            this.tokenToLabelMap = labels;
-            this.labelGenerator = makeIntGenerator(labels.size());
+        public LabelGenerator(Map<String, Integer> labels, int first) {
+            this.tokenToLabelMap = labels != null ? labels : new HashMap<>();
+            this.labelGenerator = makeIntGenerator(first);
+            this.first = first;
         }
 
         protected Integer getLabel(String token) {
             if (!tokenToLabelMap.containsKey(token)) {
-                tokenToLabelMap.putIfAbsent(token, labelGenerator.get());
+                tokenToLabelMap.put(token, labelGenerator.get());
             }
             return tokenToLabelMap.get(token);
-        }
-
-        private Map<String, Integer> getTokenToLabelMap() {
-            return tokenToLabelMap;
         }
 
         private Map<Integer, String> getLabelToTokenMap() {
@@ -126,11 +106,16 @@ public class Dataset {
         private Set<Integer> getLabelSet() {
             return new HashSet<>(tokenToLabelMap.values());
         }
+        
+        private int getFirstValue() {
+            return first;
+        }
     }
-    
+
     /*
-     * Returns a dataset generated from a file where all data values are 
-     * integers. Throws NumberFormatException if not all data points are integers. 
+     * Returns a dataset generated from a file where all data values are
+     * integers. Throws NumberFormatException if not all data points are
+     * integers.
      */
     private static class IntegerLabelGenerator extends LabelGenerator {
         @Override
@@ -147,25 +132,13 @@ public class Dataset {
         LabelGenerator headerLabelGenerator = new LabelGenerator();
         return fromFile(path, format, tableLabelGenerator, headerLabelGenerator);
     }
-    
+
     /*
      * Returns a dataset generated from a file without assumed prior labels
      */
     public static Dataset fromIntegerFile(Path path, FileFormat format) throws IOException {
         LabelGenerator tableLabelGenerator = new IntegerLabelGenerator();
         LabelGenerator headerLabelGenerator = new LabelGenerator();
-        return fromFile(path, format, tableLabelGenerator, headerLabelGenerator);
-    }
-
-    /*
-     * Returns a dataset generated from a file assumed labelling. Used for
-     * creating test sets built using the labels already generated from a
-     * training dataset
-     */
-    public static Dataset fromFile(Path path, FileFormat format, Map<String, Integer> tableLabels,
-            Map<String, Integer> headerLabels) throws IOException {
-        LabelGenerator tableLabelGenerator = new LabelGenerator(tableLabels);
-        LabelGenerator headerLabelGenerator = new LabelGenerator(headerLabels);
         return fromFile(path, format, tableLabelGenerator, headerLabelGenerator);
     }
 
@@ -191,11 +164,13 @@ public class Dataset {
 
         Set<Integer> attributeSet = headerLabelGenerator.getLabelSet();
         List<List<Integer>> invertedTable = makeInvertedTable(table);
+        Map<Integer, String> valueToHeaderTokenMap
+                = makeValueToHeaderTokenMap(invertedTable, headerLabelGenerator);
         Map<Integer, List<Integer>> valueRangeMap = makeValueRangeMap(invertedTable);
         SortedSet<Integer> valueRangeSet = makeValueRangeSet(valueRangeMap);
 
-        return new Dataset(table, attributeSet, invertedTable, tableLabelGenerator, headerLabelGenerator,
-                valueRangeMap, valueRangeSet);
+        return new Dataset(table, attributeSet, invertedTable, tableLabelGenerator, headerLabelGenerator, valueRangeMap,
+                valueRangeSet, valueToHeaderTokenMap);
     }
 
     private static SortedSet<Integer> makeValueRangeSet(Map<Integer, List<Integer>> valueRangeMap) {
@@ -246,6 +221,20 @@ public class Dataset {
                 .map(Collections::unmodifiableList).collect(toMap(generateIndex, Function.identity()));
     }
 
+    private static Map<Integer, String> makeValueToHeaderTokenMap(List<List<Integer>> invertedTable,
+            LabelGenerator headerLabelGenerator) {
+        
+        Map<Integer, String> valueToHeaderTokenMap = new HashMap<>();
+        Map<Integer, String> headerLabelToTokenMap = headerLabelGenerator.getLabelToTokenMap();
+        
+        for (int i = 0; i < invertedTable.size(); i++) {
+            final int idx = i + headerLabelGenerator.getFirstValue();
+            invertedTable.get(i).stream().distinct()
+                    .forEach(item -> valueToHeaderTokenMap.put(item, headerLabelToTokenMap.get(idx)));
+        }
+        return valueToHeaderTokenMap;
+    }
+
     /*
      * Read all non-empty lines from a file and return a list of tokens for that
      * file.
@@ -279,42 +268,6 @@ public class Dataset {
     }
 
     /*
-     * Returns a full set of indexes into the table.
-     */
-    public Set<Integer> getExamples() {
-        return IntStream.range(0, table.size()).mapToObj(Integer::valueOf).collect(toSet());
-    }
-
-    /*
-     * Returns the labels for the table attributes.
-     */
-    public Set<Integer> getAttributeSet() {
-        return attributeSet;
-    }
-
-    /*
-     * Given a string token, returns the integer label associated with it
-     */
-    public Integer getTableLabel(String token) {
-        return tableLabelGenerator.getLabel(token);
-    }
-
-    /*
-     * Given an attribute index, returns all possible unique values that
-     * attribute may attain
-     */
-    public List<Integer> getValueRange(Integer attribute) {
-        return valueRangeMap.get(attribute);
-    }
-
-    /*
-     * Returns the entry in the table at the given index
-     */
-    public List<Integer> getEntry(Integer index) {
-        return table.get(index);
-    }
-
-    /*
      * Given an attribute index, returns the values in the table for that
      * attribute.
      */
@@ -322,37 +275,12 @@ public class Dataset {
         return invertedTable.get(attributeIndex);
     }
 
-    /*
-     * Given a set of indices and an attribute index, return a list of values
-     * for that attribute and for all the provided indices
-     */
-    public List<Integer> getValuesByIndex(Set<Integer> indices, Integer attributeIndex) {
-        return indices.stream().map(i -> table.get(i).get(attributeIndex)).collect(toList());
-    }
-
-    /*
-     * Returns the map of String tokens to integer labels
-     */
-    public Map<String, Integer> getTableLabels() {
-        return tableLabelGenerator.getTokenToLabelMap();
-    }
-
-    public Map<String, Integer> getHeaderLabels() {
-        return headerLabelGenerator.getTokenToLabelMap();
-    }
-
-    /*
-     * Given an integer label, returns the String token for that label
-     */
     public String getTableToken(Integer label) {
         return tableLabelGenerator.getLabelToTokenMap().get(label);
     }
 
-    /*
-     * Given an integer label, returns the String token for that label
-     */
-    public String getHeaderToken(int label) {
-        return headerLabelGenerator.getLabelToTokenMap().get(label);
+    public String getHeaderTokenFromValue(int i) {
+        return valueToHeaderTokenMap.get(i);
     }
 
     /*
@@ -363,40 +291,6 @@ public class Dataset {
     }
 
     /*
-     * Given a set of indices representing a sublist of entries, a target index,
-     * and an attribute to split the examples on, returns the resulting entropy
-     * of that sublist for that split.
-     */
-    public double computeEntropy(Set<Integer> indices, Integer targetIndex, Integer attributeIndex) {
-        return getValueRange(attributeIndex).stream()
-                .map(v -> indices.stream().map(table::get).filter(l -> l.get(attributeIndex).equals(v)))
-                .map(s -> s.map(l -> l.get(targetIndex)).collect(toList()))
-                .mapToDouble(l -> (double) l.size() * computeEntropy(l) / (double) indices.size()).sum();
-    }
-
-    /*
-     * For a given list of values, computes the entropy. Note that we do not
-     * take a base-2 logarithm as per class instruction, as the logarithm
-     * function is monotone increasing irrespective of its base and therefore
-     * any base > 1 (including the Math.log base of Euler's constant e) will
-     * suffice.
-     */
-    private static double computeEntropy(List<Integer> values) {
-        Collection<Long> counts = values.stream().collect(groupingBy(identity(), counting())).values();
-        Double size = counts.stream().mapToDouble(Double::valueOf).sum();
-        DoubleUnaryOperator entropyTerm = count -> -count * Math.log(count / (double) size) / (double) size;
-        return counts.stream().mapToDouble(Double::valueOf).map(entropyTerm).sum();
-    }
-
-    /*
-     * Returns all attribute in the dataset which can take on exactly two
-     * values.
-     */
-    public List<String> getAttributeTokens() {
-        return attributeSet.stream().map(headerLabelGenerator.getLabelToTokenMap()::get).collect(toList());
-    }
-
-    /*
      * For a given target index, returns all attribute labels which are *not*
      * that target.
      */
@@ -404,65 +298,8 @@ public class Dataset {
         return attributeSet.stream().filter(i -> !i.equals(targetIndex)).collect(toSet());
     }
 
-    public String getTableToken(int attr) {
-        return tableLabelGenerator.getLabelToTokenMap().get(attr);
-    }
-    
     public SortedSet<Integer> getValueRangeSet() {
         return valueRangeSet;
-    }
-
-    public int size() {
-        return table.size();
-    }
-
-    /*
-     * Class which abstracts the logic of maintaining and distributing integer
-     * labels
-     */
-    public static class TrainTestDatasetSplit {
-        private Dataset trainingSet;
-        private Dataset testSet;
-
-        private TrainTestDatasetSplit(Dataset trainingSet, Dataset testSet) {
-            this.trainingSet = trainingSet;
-            this.testSet = testSet;
-        }
-
-        public Dataset getTrainingSet() {
-            return trainingSet;
-        }
-
-        public Dataset getTestSet() {
-            return testSet;
-        }
-    }
-
-    /*
-     * Splits the Dataset into two separate sets. Unfortuantely, this is dead
-     * code I did not get to use.
-     */
-    public TrainTestDatasetSplit splitDataset(double splitRatio) {
-        if (splitRatio < 0.0 || splitRatio > 1.0) {
-            throw new IllegalArgumentException("Split ration must be between 0.0 and 1.0");
-        }
-        if (table.size() < 2) {
-            throw new IllegalStateException("Cannot split Dataset with fewer than 2 examples");
-        }
-
-        Random rand = new Random();
-        List<List<Integer>> tableCopy = new ArrayList<List<Integer>>(table);
-        Collections.shuffle(tableCopy, rand);
-
-        int splitIndex = (int) (splitRatio * table.size());
-
-        List<List<Integer>> trainingTable = new ArrayList<List<Integer>>(tableCopy.subList(0, splitIndex));
-        List<List<Integer>> testTable = new ArrayList<List<Integer>>(tableCopy.subList(splitIndex, tableCopy.size()));
-
-        Dataset trainingDataset = fromTable(trainingTable, attributeSet, tableLabelGenerator, headerLabelGenerator);
-        Dataset testDataset = fromTable(testTable, attributeSet, tableLabelGenerator, headerLabelGenerator);
-
-        return new TrainTestDatasetSplit(trainingDataset, testDataset);
     }
 
     /*

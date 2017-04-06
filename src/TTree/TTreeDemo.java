@@ -14,38 +14,41 @@ import HelperObjects.FileWriter;
 import HelperObjects.Rule;
 
 public class TTreeDemo {
-    
+
     private static final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-    
-	public static void main(String[] args) throws IOException {
-		Path toRead = readPath("Please enter the name of the whitespace-delimited file you wish to read from: ");
-		
-		Dataset dataset = Dataset.fromFile(toRead, FileFormat.SPACE_SEPARATED);
-		int tableSize = dataset.getTable().size();
 
-		System.out.print("Please enter the name of the file you wish to write to: ");
-		String toWrite = reader.readLine();
-		
-		double minSup = readNormalizedDouble("Please enter the minimum support for frequent itemsets: ");
-		double minConf = readNormalizedDouble("Please enter the minimum confidence for rules: ");
-		
-		System.out.println("Generating rules...");
-		long start = System.currentTimeMillis();
-		TTree tree = new TTree(dataset, convertToIntegerNumerator(minSup, tableSize));
-		List<Rule> rules = tree.generateRules(minConf);
-		long end = System.currentTimeMillis();
+    public static void main(String[] args) throws IOException {
+        Path toRead = readPath("Please enter the name of the whitespace-delimited file you wish to read from: ");
 
-		FileWriter.writeRulesToFileFromList(rules, toWrite);
-		
-		System.out.format("Rule generation complete, written to '%s'\n", toWrite);
-		System.out.format("Total algorithmic running time: %dms\n", end - start);
-	}
+        System.out.print("Please enter the name of the file you wish to write to: ");
+        String toWrite = reader.readLine();
 
-	private static int convertToIntegerNumerator(double d, int size) {
-		return (int) Math.ceil(d * size);
-	}
-	
-	private static Path readPath(String prompt) throws IOException {
+        double minSup = readNormalizedDouble("Please enter the minimum support for frequent itemsets: ");
+        double minConf = readNormalizedDouble("Please enter the minimum confidence for rules: ");
+
+        System.out.print("Generating dataset from file... ");
+        Dataset dataset = Dataset.fromFile(toRead, FileFormat.SPACE_SEPARATED);
+        System.out.println("done");
+        int tableSize = dataset.getTable().size();
+
+        System.out.print("Generating rules...");
+        long start = System.currentTimeMillis();
+        TTree tree = new TTree(dataset, convertToIntegerNumerator(minSup, tableSize));
+        List<Rule> rules = tree.generateRules(minConf);
+        long end = System.currentTimeMillis();
+        System.out.println("done");
+
+        FileWriter.writeRulesToFileFromList(rules, toWrite);
+
+        System.out.format("Rule generation complete, written to '%s'\n", toWrite);
+        System.out.format("Total algorithmic running time: %dms\n", end - start);
+    }
+
+    private static int convertToIntegerNumerator(double d, int size) {
+        return (int) Math.ceil(d * size);
+    }
+
+    private static Path readPath(String prompt) throws IOException {
         while (true) {
             try {
                 System.out.print(prompt);
@@ -60,8 +63,8 @@ public class TTreeDemo {
             }
         }
     }
-	
-	private static double readNormalizedDouble(String prompt) throws IOException {
+
+    private static double readNormalizedDouble(String prompt) throws IOException {
         while (true) {
             try {
                 System.out.print(prompt);

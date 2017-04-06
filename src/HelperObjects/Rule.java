@@ -52,7 +52,7 @@ public class Rule {
     
     private String makeItemSetToken(ItemSet is) {
         return is.getItems().stream()
-                .map(i -> dataset.map(d -> String.format("%s=%s", d.getHeaderToken(i), d.getTableToken(i))).orElse(i.toString()))
+                .map(i -> dataset.map(d -> String.format("%s=%s", d.getHeaderTokenFromValue(i), d.getTableToken(i))).orElse(i.toString()))
                 .collect(Collectors.joining(", ", "[", "]"));       
     }
 
