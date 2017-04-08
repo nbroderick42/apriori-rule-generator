@@ -110,7 +110,7 @@ public class ItemSet {
             }
         }
         
-        return false;
+        return l1.size() > l2.size();
       }
 
     public boolean contains(ItemSet r) {
