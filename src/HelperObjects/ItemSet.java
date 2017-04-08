@@ -94,19 +94,24 @@ public class ItemSet {
     }
 
     public boolean greaterThan(ItemSet r) {
-        int i;
-        for (i = 0; i < r.size() && i < items.size(); i++) {
-            int si = items.get(i);
-            int ri = r.get(i);
-
-            if (si > ri) {
+        return greaterThan(items, r.items);
+    }
+    
+    private static boolean greaterThan(List<Integer> l1, List<Integer> l2) {
+        for (int i = 0; i < l1.size() && i < l2.size(); i++) {
+            int r = l1.get(i);
+            int s = l2.get(i);
+            
+            if (r > s) {
                 return true;
-            } else if (si < ri) {
+            }
+            else if (r < s) {
                 return false;
             }
         }
-        return i < r.size();
-    }
+        
+        return false;
+      }
 
     public boolean contains(ItemSet r) {
         return contains(items, r.items);
