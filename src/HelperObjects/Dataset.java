@@ -86,7 +86,7 @@ public class Dataset {
         protected LabelGenerator(int start) {
             this(null, start);
         }
-        
+
         protected LabelGenerator() {
             this(null, 0);
         }
@@ -129,7 +129,7 @@ public class Dataset {
      * integers.
      */
     private static class IntegerLabelGenerator extends LabelGenerator {
-        
+
         @Override
         protected Integer getLabel(Integer attr, String token) {
             return Integer.parseInt(token);
@@ -201,7 +201,7 @@ public class Dataset {
         if (!it.hasNext()) {
             return table;
         }
-        
+
         it.forEachRemaining(line -> {
             List<Integer> row = new ArrayList<>();
             for (int i = 0; i < line.length; i++) {
@@ -347,10 +347,11 @@ public class Dataset {
             this.split = split;
         }
     }
-    
+
     @Override
     public String toString() {
-        String result = table.stream().map(row -> row.stream().map(Object::toString).collect(joining("\t\t"))).collect(joining("\n"));
-        return result;
+        return table.stream().map(row -> row.stream().sorted(Integer::compareTo).collect(toList()))
+                .sorted(ItemSet::compare).map(l -> l.stream().map(Object::toString).collect(joining("\t")))
+                .collect(joining("\n"));
     }
 }

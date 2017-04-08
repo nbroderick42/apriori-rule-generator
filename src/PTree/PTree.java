@@ -113,6 +113,7 @@ public class PTree implements RuleGenerator{
             r = ItemSet.delN(r, lss);
             newPref.setChdRef(new NodeInternal(r, 1));
             newPref.getChdRef().setSibRef(ref);
+            ref.setI(ItemSet.delN(ref.getI(), lss));
             moveSiblings(ref, newPref);
         } else {
             NodeInternal newSref = new NodeInternal(r);
