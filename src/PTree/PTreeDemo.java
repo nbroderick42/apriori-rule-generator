@@ -10,7 +10,7 @@ import HelperObjects.Dataset.FileFormat;
 public class PTreeDemo {
 
     public static void main(String[] args) throws IOException {
-        Dataset dataset = Dataset.fromIntegerFile(Paths.get("data-test"), FileFormat.SPACE_SEPARATED);
+        Dataset dataset = Dataset.fromFile(Paths.get("ChessData.txt"), FileFormat.SPACE_SEPARATED);
 
         for(List<Integer> row : dataset.getTable()) {
             for(Integer cell : row) {

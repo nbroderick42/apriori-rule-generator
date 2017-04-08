@@ -29,6 +29,8 @@ public class TTreeDemo {
         System.out.print("Generating dataset from file... ");
         Dataset dataset = Dataset.fromFile(toRead, FileFormat.SPACE_SEPARATED);
         System.out.println("done");
+        System.out.println();
+        System.out.println(dataset);
         int tableSize = dataset.getTable().size();
 
         System.out.print("Generating rules...");
