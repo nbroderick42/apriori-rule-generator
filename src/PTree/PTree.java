@@ -46,7 +46,7 @@ public class PTree implements RuleGenerator{
     private void addToPtreeTopLevel(List<Integer> r) {
         ItemSet is = new ItemSet(r);
 
-        int r0 = r.get(0);
+        int r0 = is.get(0);
         if (start[r0] == null) {
             start[r0] = new NodeTop();
         } else {

@@ -122,32 +122,27 @@ public class ItemSet {
     }
 
     private static boolean contains(List<Integer> l1, List<Integer> l2) {
-        if (l2.isEmpty()) {
-            return true;
-        } else if (l1.isEmpty()) {
+        if (l1.size() <= l2.size()) {
             return false;
         }
-
+        
         int i = 0;
         int j = 0;
-        int r = l1.get(0);
-        int s = l2.get(0);
-        int l1Size = l1.size();
-        int l2Size = l2.size();
-
-        while (i < l1Size && j < l2Size) {
-            if (r < s) {
-                if (++i < l1Size) {
-                    r = l1.get(i);
-                }
-            } else if (r > s) {
+        
+        while (i < l1.size() && j < l2.size()) {
+            if (l1.get(i) > l2.get(j)) {
                 return false;
-            } else if (++j < l2Size && ++i < l1Size) {
-                r = l1.get(i);
-                s = l2.get(j);
+            }
+            else if (l1.get(i) < l2.get(j)) {
+                i++;
+            }
+            else {
+                i++; 
+                j++;
             }
         }
-        return j == l2Size;
+        
+        return j >= l2.size();       
     }
 
     public static ItemSet del1(ItemSet is) {
