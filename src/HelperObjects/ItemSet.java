@@ -94,19 +94,24 @@ public class ItemSet {
     }
 
     public boolean greaterThan(ItemSet r) {
-        int i;
-        for (i = 0; i < r.size() && i < items.size(); i++) {
-            int si = items.get(i);
-            int ri = r.get(i);
-
-            if (si > ri) {
-                return true;
-            } else if (si < ri) {
-                return false;
+        return compare(items, r.items) > 0;
+    }
+    
+    public static int compare(List<Integer> l1, List<Integer> l2) {
+        for (int i = 0; i < l1.size() && i < l2.size(); i++) {
+            int r = l1.get(i);
+            int s = l2.get(i);
+            
+            if (r > s) {
+                return 1;
+            }
+            else if (r < s) {
+                return -1;
             }
         }
-        return i < r.size();
-    }
+        
+        return l1.size() - l2.size();
+      }
 
     public boolean contains(ItemSet r) {
         return contains(items, r.items);
@@ -122,32 +127,27 @@ public class ItemSet {
     }
 
     private static boolean contains(List<Integer> l1, List<Integer> l2) {
-        if (l2.isEmpty()) {
-            return true;
-        } else if (l1.isEmpty()) {
+        if (l1.size() <= l2.size()) {
             return false;
         }
-
+        
         int i = 0;
         int j = 0;
-        int r = l1.get(0);
-        int s = l2.get(0);
-        int l1Size = l1.size();
-        int l2Size = l2.size();
-
-        while (i < l1Size && j < l2Size) {
-            if (r < s) {
-                if (++i < l1Size) {
-                    r = l1.get(i);
-                }
-            } else if (r > s) {
+        
+        while (i < l1.size() && j < l2.size()) {
+            if (l1.get(i) > l2.get(j)) {
                 return false;
-            } else if (++j < l2Size && ++i < l1Size) {
-                r = l1.get(i);
-                s = l2.get(j);
+            }
+            else if (l1.get(i) < l2.get(j)) {
+                i++;
+            }
+            else {
+                i++; 
+                j++;
             }
         }
-        return j == l2Size;
+        
+        return j >= l2.size();       
     }
 
     public static ItemSet del1(ItemSet is) {

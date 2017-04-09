@@ -58,7 +58,7 @@ public class PTree implements RuleGenerator{
             largestItemSetSize = 1;
         }
 
-        int r0 = r.get(0);
+        int r0 = is.get(0);
         if (start[r0] == null) {
             start[r0] = new NodeTop();
         } else {
@@ -81,20 +81,17 @@ public class PTree implements RuleGenerator{
             }
 
             boolean rLessThanRef = ref.getI().greaterThan(r);
-            boolean rGreaterThanRef = !rLessThanRef;
             boolean rContainedInRef = ref.getI().contains(r);
             boolean rContainsRef = ref.getI().containedBy(r);
 
             if (rLessThanRef && rContainedInRef) {
                 parent(f, ref, r, oldRef);
-            } else if (rLessThanRef && !rContainedInRef) {
+            } else if (rLessThanRef) {
                 eldSib(f, ref, r, oldRef);
-            } else if (rGreaterThanRef && rContainsRef) {
+            } else if (rContainsRef) {
                 child(ref, r);
-            } else if (rGreaterThanRef && !rContainsRef) {
-                yngSib(f, ref, r, oldRef);
             } else {
-                assert false : "Impossible case reached in addToPtree";
+                yngSib(f, ref, r, oldRef);
             }
         }
     }
@@ -125,6 +122,7 @@ public class PTree implements RuleGenerator{
             r = ItemSet.delN(r, lss);
             newPref.setChdRef(new NodeInternal(r, 1));
             newPref.getChdRef().setSibRef(ref);
+            ref.setI(ItemSet.delN(ref.getI(), lss));
             moveSiblings(ref, newPref);
         } else {
             NodeInternal newSref = new NodeInternal(r);

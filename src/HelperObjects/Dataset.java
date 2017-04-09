@@ -1,6 +1,6 @@
 package HelperObjects;
 
-import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -79,36 +80,46 @@ public class Dataset {
 
     private static class LabelGenerator {
         private final int first;
-        private Map<String, Integer> tokenToLabelMap;
-        private Supplier<Integer> labelGenerator;
+        private Map<Integer, Map<String, Integer>> tokenToLabelMap;
+        private Supplier<Integer> intGenerator;
 
-        private LabelGenerator() {
+        protected LabelGenerator(int start) {
+            this(null, start);
+        }
+
+        protected LabelGenerator() {
             this(null, 0);
         }
 
-        public LabelGenerator(Map<String, Integer> labels, int first) {
+        public LabelGenerator(Map<Integer, Map<String, Integer>> labels, int first) {
             this.tokenToLabelMap = labels != null ? labels : new HashMap<>();
-            this.labelGenerator = makeIntGenerator(first);
+            this.intGenerator = makeIntGenerator(first);
             this.first = first;
         }
 
-        protected Integer getLabel(String token) {
-            if (!tokenToLabelMap.containsKey(token)) {
-                tokenToLabelMap.put(token, labelGenerator.get());
+        protected Integer getLabel(Integer attr, String token) {
+            tokenToLabelMap.putIfAbsent(attr, new HashMap<>());
+
+            if (!tokenToLabelMap.get(attr).containsKey(token)) {
+                int newLabel = intGenerator.get();
+                tokenToLabelMap.get(attr).put(token, newLabel);
             }
-            return tokenToLabelMap.get(token);
+
+            return tokenToLabelMap.get(attr).get(token);
         }
 
         private Map<Integer, String> getLabelToTokenMap() {
-            return tokenToLabelMap.entrySet().stream().collect(toMap(Entry::getValue, Entry::getKey));
+            return tokenToLabelMap.entrySet().stream().map(e -> e.getValue()).flatMap(
+                    m -> m.entrySet().stream().collect(toMap(Entry::getValue, Entry::getKey)).entrySet().stream())
+                    .collect(toMap(Entry::getKey, Entry::getValue));
         }
 
-        private Set<Integer> getLabelSet() {
-            return new HashSet<>(tokenToLabelMap.values());
-        }
-        
         private int getFirstValue() {
             return first;
+        }
+
+        public Set<Integer> getLabelSet() {
+            return tokenToLabelMap.entrySet().stream().flatMap(e -> e.getValue().values().stream()).collect(toSet());
         }
     }
 
@@ -118,8 +129,9 @@ public class Dataset {
      * integers.
      */
     private static class IntegerLabelGenerator extends LabelGenerator {
+
         @Override
-        protected Integer getLabel(String token) {
+        protected Integer getLabel(Integer attr, String token) {
             return Integer.parseInt(token);
         }
     }
@@ -128,8 +140,8 @@ public class Dataset {
      * Returns a dataset generated from a file without assumed prior labels
      */
     public static Dataset fromFile(Path path, FileFormat format) throws IOException {
-        LabelGenerator tableLabelGenerator = new LabelGenerator();
-        LabelGenerator headerLabelGenerator = new LabelGenerator();
+        LabelGenerator tableLabelGenerator = new LabelGenerator(1);
+        LabelGenerator headerLabelGenerator = new LabelGenerator(1);
         return fromFile(path, format, tableLabelGenerator, headerLabelGenerator);
     }
 
@@ -138,7 +150,7 @@ public class Dataset {
      */
     public static Dataset fromIntegerFile(Path path, FileFormat format) throws IOException {
         LabelGenerator tableLabelGenerator = new IntegerLabelGenerator();
-        LabelGenerator headerLabelGenerator = new LabelGenerator();
+        LabelGenerator headerLabelGenerator = new LabelGenerator(1);
         return fromFile(path, format, tableLabelGenerator, headerLabelGenerator);
     }
 
@@ -164,8 +176,7 @@ public class Dataset {
 
         Set<Integer> attributeSet = headerLabelGenerator.getLabelSet();
         List<List<Integer>> invertedTable = makeInvertedTable(table);
-        Map<Integer, String> valueToHeaderTokenMap
-                = makeValueToHeaderTokenMap(invertedTable, headerLabelGenerator);
+        Map<Integer, String> valueToHeaderTokenMap = makeValueToHeaderTokenMap(invertedTable, headerLabelGenerator);
         Map<Integer, List<Integer>> valueRangeMap = makeValueRangeMap(invertedTable);
         SortedSet<Integer> valueRangeSet = makeValueRangeSet(valueRangeMap);
 
@@ -184,9 +195,22 @@ public class Dataset {
      * Given a list of tokens and a label generator, produce the table of data
      */
     private static List<List<Integer>> makeTable(String[][] lines, LabelGenerator labelGenerator) {
-        return Arrays.stream(lines).skip(1)
-                .map(tokens -> Arrays.stream(tokens).map(labelGenerator::getLabel).collect(toList()))
-                .map(Collections::unmodifiableList).collect(collectingAndThen(toList(), Collections::unmodifiableList));
+        List<List<Integer>> table = new ArrayList<>();
+        Iterator<String[]> it = Arrays.asList(lines).listIterator(1);
+
+        if (!it.hasNext()) {
+            return table;
+        }
+
+        it.forEachRemaining(line -> {
+            List<Integer> row = new ArrayList<>();
+            for (int i = 0; i < line.length; i++) {
+                row.add(labelGenerator.getLabel(i, line[i]));
+            }
+            table.add(row);
+        });
+
+        return table;
     }
 
     /*
@@ -194,7 +218,14 @@ public class Dataset {
      * attribute labels
      */
     private static Set<Integer> makeAttributeSet(String[][] lines, LabelGenerator headerLabelGenerator) {
-        return Arrays.stream(lines[0]).map(headerLabelGenerator::getLabel).collect(toSet());
+        Set<Integer> attributes = new HashSet<>();
+        String[] header = lines[0];
+
+        for (int i = 0; i < header.length; i++) {
+            attributes.add(headerLabelGenerator.getLabel(i, header[i]));
+        }
+
+        return attributes;
     }
 
     /*
@@ -223,10 +254,10 @@ public class Dataset {
 
     private static Map<Integer, String> makeValueToHeaderTokenMap(List<List<Integer>> invertedTable,
             LabelGenerator headerLabelGenerator) {
-        
+
         Map<Integer, String> valueToHeaderTokenMap = new HashMap<>();
         Map<Integer, String> headerLabelToTokenMap = headerLabelGenerator.getLabelToTokenMap();
-        
+
         for (int i = 0; i < invertedTable.size(); i++) {
             final int idx = i + headerLabelGenerator.getFirstValue();
             invertedTable.get(i).stream().distinct()
@@ -315,5 +346,12 @@ public class Dataset {
         private FileFormat(Function<String, String[]> split) {
             this.split = split;
         }
+    }
+
+    @Override
+    public String toString() {
+        return table.stream().map(row -> row.stream().sorted(Integer::compareTo).collect(toList()))
+                .sorted(ItemSet::compare).map(l -> l.stream().map(Object::toString).collect(joining("\t")))
+                .collect(joining("\n"));
     }
 }
