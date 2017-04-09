@@ -3,9 +3,10 @@ package HelperObjects;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
-public class ItemSet {
+public class ItemSet implements Iterable<Integer> {
     
     
     public static final ItemSet EMPTY = new ItemSet(Collections.emptyList());
@@ -23,6 +24,11 @@ public class ItemSet {
     public ItemSet(Collection<Integer> items) {
         this.items = new ArrayList<>(items);
         Collections.sort(this.items);
+    }
+
+    public ItemSet(int i) {
+        this();
+        items.add(i);
     }
 
     public List<Integer> getItems() {
@@ -75,6 +81,11 @@ public class ItemSet {
     public ItemSet append(ItemSet is) {
         is.items.forEach(this::append);
         return this;
+    }
+    
+    public ItemSet union(ItemSet is) {
+        ItemSet ret = new ItemSet();
+        return ret.append(this).append(is);
     }
 
     public int size() {
@@ -233,5 +244,10 @@ public class ItemSet {
         ret.append(i1);
         ret.append(i2);
         return ret;
+    }
+
+    @Override
+    public Iterator<Integer> iterator() {
+        return items.iterator();
     }
 }

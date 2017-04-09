@@ -14,11 +14,8 @@ public class PTree implements RuleGenerator{
 
     private Dataset dataset;
     private NodeTop[] start;
-    private int largestItemSetSize;
-
-    public int getLargestItemSetSize() {
-        return largestItemSetSize;
-    }
+    private int[] nodeCardinalityCounts;
+    private PTreeTable pTreeTable;
 
     private enum LinkFlag {
         CHILD {
@@ -39,9 +36,12 @@ public class PTree implements RuleGenerator{
 
     public PTree(Dataset dataset) {
         this.dataset = dataset;
-        this.start = new NodeTop[dataset.getValueRangeSet().size()];
+        this.start = new NodeTop[dataset.getValueRangeSet().size() + 1];
+        this.nodeCardinalityCounts = new int[dataset.getValueRangeSet().size() + 1];
 
         createPtree();
+        
+        this.pTreeTable = new PTreeTable(this);
     }
     private void createPtree() {
         List<List<Integer>> R = dataset.getTable();
@@ -54,25 +54,32 @@ public class PTree implements RuleGenerator{
         if (is.isEmpty()) {
             return;
         }
-        else if (largestItemSetSize == 0) {
-            largestItemSetSize = 1;
-        }
-
+        
         int r0 = is.get(0);
         if (start[r0] == null) {
-            start[r0] = new NodeTop();
+            start[r0] = new NodeTop(r0);
+            nodeCardinalityCounts[1]++;
         } else {
             start[r0].sup++;
         }
 
         if (r.size() > 1) {
-            addToPtree(LinkFlag.CHILD, start[r0].chdRef, ItemSet.del1(is), start[r0]);
+            addToPtree(LinkFlag.CHILD, start[r0].chdRef, ItemSet.del1(is), start[r0], 2, r.size());
         }
     }
+    
+    private NodeInternal createPTreeInternalNode(ItemSet I, int level) {
+        return createPTreeInternalNode(I, 0, level);
+    }
+    
+    private NodeInternal createPTreeInternalNode(ItemSet I, int sup, int level) {
+        nodeCardinalityCounts[level]++;
+        return new NodeInternal(I, sup);
+    }
 
-    private void addToPtree(LinkFlag f, Node ref, ItemSet r, Node oldRef) {
+    private void addToPtree(LinkFlag f, Node ref, ItemSet r, Node oldRef, int parentLength, int itemSetLength) {
         if (ref == null) {
-            Node newRef = new NodeInternal(r, 1);
+            Node newRef = createPTreeInternalNode(r, 1, itemSetLength);
             f.link(oldRef, newRef);
         } else {
             if (ref.getI().equals(r)) {
@@ -85,86 +92,86 @@ public class PTree implements RuleGenerator{
             boolean rContainsRef = ref.getI().containedBy(r);
 
             if (rLessThanRef && rContainedInRef) {
-                parent(f, ref, r, oldRef);
+                parent(f, ref, r, oldRef, parentLength, itemSetLength);
             } else if (rLessThanRef) {
-                eldSib(f, ref, r, oldRef);
+                eldSib(f, ref, r, oldRef, parentLength, itemSetLength);
             } else if (rContainsRef) {
-                child(ref, r);
+                child(ref, r, parentLength, itemSetLength);
             } else {
-                yngSib(f, ref, r, oldRef);
+                yngSib(f, ref, r, oldRef, parentLength, itemSetLength);
             }
         }
     }
 
-    private void parent(LinkFlag f, Node ref, ItemSet r, Node oldRef) {
-        NodeInternal newRef = new NodeInternal(r, ref.sup + 1);
+    private void parent(LinkFlag f, Node ref, ItemSet r, Node oldRef, int parentLength, int itemSetLength) {
+        NodeInternal newRef = createPTreeInternalNode(r, ref.sup + 1, itemSetLength);
         newRef.chdRef = ref;
         f.link(oldRef, newRef);
         ref.setI(ItemSet.delN(ref.getI(), r));
         moveSiblings(ref, newRef);
     }
 
-    private void child(Node ref, ItemSet r) {
+    private void child(Node ref, ItemSet r, int parentLength, int itemSetLength) {
         ref.incSup();
         if (!ref.hasChild()) {
-            NodeInternal newRef = new NodeInternal(ItemSet.delN(r, ref.getI()), 1);
+            NodeInternal newRef = createPTreeInternalNode(ItemSet.delN(r, ref.getI()), 1, itemSetLength);
             ref.setChdRef(newRef);
         } else {
-            addToPtree(LinkFlag.CHILD, ref.getChdRef(), ItemSet.delN(r, ref.getI()), ref);
+            addToPtree(LinkFlag.CHILD, ref.getChdRef(), ItemSet.delN(r, ref.getI()), ref, parentLength + ref.getI().size(), itemSetLength);
         }
     }
 
-    private void eldSib(LinkFlag f, Node ref, ItemSet r, Node oldRef) {
+    private void eldSib(LinkFlag f, Node ref, ItemSet r, Node oldRef, int parentLength, int itemSetLength) {
         ItemSet lss = ItemSet.lss(r, ref.getI());
         if (!lss.isEmpty() && !lss.equals(oldRef.getI())) {
-            NodeInternal newPref = new NodeInternal(lss, ref.getSup() + 1);
+            NodeInternal newPref = createPTreeInternalNode(lss, ref.getSup() + 1, lss.size() + parentLength - 1); 
             f.link(oldRef, newPref);
             r = ItemSet.delN(r, lss);
-            newPref.setChdRef(new NodeInternal(r, 1));
+            newPref.setChdRef(createPTreeInternalNode(r, 1, itemSetLength));
             newPref.getChdRef().setSibRef(ref);
             ref.setI(ItemSet.delN(ref.getI(), lss));
             moveSiblings(ref, newPref);
         } else {
-            NodeInternal newSref = new NodeInternal(r);
+            NodeInternal newSref = createPTreeInternalNode(r, itemSetLength);
             newSref.setSibRef(ref);
             f.link(oldRef, newSref);
         }
     }
 
-    private void yngSib(LinkFlag f, Node ref, ItemSet r, Node oldRef) {
+    private void yngSib(LinkFlag f, Node ref, ItemSet r, Node oldRef, int parentLength, int itemSetLength) {
         if (!ref.hasSiblings()) {
-            yngSib1(f, ref, r, oldRef);
+            yngSib1(f, ref, r, oldRef, parentLength, itemSetLength);
         } else {
-            yngSib2(f, ref, r, oldRef);
+            yngSib2(f, ref, r, oldRef, parentLength, itemSetLength);
         }
     }
 
-    private void yngSib1(LinkFlag f, Node ref, ItemSet r, Node oldRef) {
+    private void yngSib1(LinkFlag f, Node ref, ItemSet r, Node oldRef, int parentLength, int itemSetLength) {
         ItemSet lss = ItemSet.lss(r, ref.getI());
         if (!lss.isEmpty() && !lss.equals(oldRef.getI())) {
-            NodeInternal newPref = new NodeInternal(lss, ref.getSup() + 1);
+            NodeInternal newPref = createPTreeInternalNode(lss, ref.getSup() + 1, lss.size() + parentLength - 1);
             f.link(oldRef, newPref);
             ref.setI(ItemSet.delN(ref.getI(), lss));
             newPref.setChdRef(ref);
-            ref.setSibRef(new NodeInternal(ItemSet.delN(r, lss), 1));
+            ref.setSibRef(createPTreeInternalNode(ItemSet.delN(r, lss), 1, itemSetLength));
         } else {
-            ref.setSibRef(new NodeInternal(r, 1));
+            ref.setSibRef(createPTreeInternalNode(r, 1, itemSetLength));
         }
     }
 
-    private void yngSib2(LinkFlag f, Node ref, ItemSet r, Node oldRef) {
+    private void yngSib2(LinkFlag f, Node ref, ItemSet r, Node oldRef, int parentLength, int itemSetLength) {
         ItemSet lss = ItemSet.lss(r, ref.getI());
         if (!lss.isEmpty() && !lss.equals(oldRef.getI())) {
-            NodeInternal newPref = new NodeInternal(lss, ref.getSup() + 1);
+            NodeInternal newPref = createPTreeInternalNode(lss, ref.getSup() + 1, lss.size() + parentLength - 1);
             f.link(oldRef, newPref);
             ref.setI(ItemSet.delN(ref.getI(), lss));
             newPref.setChdRef(ref);
             Node tempRef = ref.getSibRef();
-            ref.setSibRef(new NodeInternal(r, 1));
+            ref.setSibRef(createPTreeInternalNode(r, 1, itemSetLength));
             ref.getSibRef().setSibRef(tempRef);
             moveSiblings(ref, newPref);
         } else {
-            addToPtree(LinkFlag.SIBLING, ref.getSibRef(), r, ref);
+            addToPtree(LinkFlag.SIBLING, ref.getSibRef(), r, ref, parentLength + ref.getI().size(), itemSetLength);
         }
     }
 
@@ -175,10 +182,11 @@ public class PTree implements RuleGenerator{
         }
     }
 
-    private static abstract class Node {
+    static abstract class Node {
 
         protected int sup;
         protected Node chdRef;
+        
         protected int getSup() {
             return sup;
         }
@@ -210,15 +218,19 @@ public class PTree implements RuleGenerator{
         abstract boolean hasSiblings();
 
     }
-    private static class NodeTop extends Node {
+    
+    static class NodeTop extends Node {
 
-        private NodeTop() {
+        private ItemSet is;
+        
+        private NodeTop(int i) {
             sup = 1;
+            is = new ItemSet(i);
         }
 
         @Override
         protected ItemSet getI() {
-            return ItemSet.EMPTY;
+            return is;
         }
 
         @Override
@@ -248,7 +260,7 @@ public class PTree implements RuleGenerator{
 
     }
 
-    private static class NodeInternal extends Node {
+    static class NodeInternal extends Node {
 
         private ItemSet I;
         private Node sibRef;
@@ -302,6 +314,16 @@ public class PTree implements RuleGenerator{
     public Dataset getDataset() {
         return dataset;
     }
-
+    
+    public int[] getNodeCardinalityCounts() {
+        return nodeCardinalityCounts;
+    }
+    
+    public NodeTop[] getStart() {
+        return start;
+    }
+    public PTreeTable getPTreeTable() {
+        return pTreeTable;
+    }
 
 }

@@ -5,13 +5,13 @@ import java.nio.file.Paths;
 
 import HelperObjects.Dataset;
 import HelperObjects.Dataset.FileFormat;
+import TTree.TTree;
 
 public class PTreeDemo {
 
     public static void main(String[] args) throws IOException {
-        Dataset dataset = Dataset.fromFile(Paths.get("ChessData.txt"), FileFormat.SPACE_SEPARATED);
-        System.out.println(dataset);
-        PTree tree = new PTree(dataset);
-        System.out.println(tree.getLargestItemSetSize());
+        Dataset dataset = Dataset.fromIntegerFile(Paths.get("data-test"), FileFormat.SPACE_SEPARATED);
+        TTree tTree = new TTree(dataset, 0);
+        tTree.createFromPTree(1);
     }
 }
