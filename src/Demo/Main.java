@@ -49,11 +49,16 @@ public class Main {
         Dataset dataset = Dataset.build(toRead, fileFormat, dataType);
         System.out.println("done");
         
-        System.out.println();
-        System.out.println(dataset);
-        System.out.println();
-        
         int tableSize = dataset.getTable().size();
+        if (tableSize <= 25) {
+            System.out.println();
+            System.out.println(dataset);
+            System.out.println();
+        }
+        else {
+            System.out.format("Dataset with %d rows read", tableSize);
+        }
+        
         int minSupCount = convertToIntegerNumerator(minSup, tableSize);
         
         List<Rule> rules = generateRules(dataset, minSupCount, minConf);
@@ -114,6 +119,7 @@ public class Main {
             break;
         case 2: 
             ruleGenerator = TTree::fromPTree;
+            break;
         default:
             throw new RuntimeException("Unhandled switch case in ruleGenerator");
         }
@@ -125,7 +131,7 @@ public class Main {
         
         long end = System.currentTimeMillis();
         System.out.println("done");
-        System.out.format("Total algorithmic time: %d", end - start);
+        System.out.format("Total algorithmic time: %dms\n", end - start);
         
         return result;        
     } 

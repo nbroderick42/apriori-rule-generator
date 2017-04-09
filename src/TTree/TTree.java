@@ -1,5 +1,6 @@
 package TTree;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedSet;
@@ -357,19 +358,19 @@ public class TTree implements RuleGenerator {
 
     private List<Rule> generatePartitions(double minConf, List<Integer> path) {
         assert path.size() >= 2 : "Need at least two elements in path";
-        assert path.size() <= 64 : "generatePartitions can't support tables with > 64 values!";
 
         int datasetSize = dataset.getTable().size();
         double unionSup = (double) findInTtree(new ItemSet(path)).sup / (double) datasetSize;
         List<Rule> result = new ArrayList<>();
 
-        int max = 1 << (path.size() - 1);
+        BigInteger max = BigInteger.valueOf(1 << (path.size() - 1));
 
-        for (long field = 1; field < max; field++) {
+        for (BigInteger field = BigInteger.ONE; field.compareTo(max) < 0; field = field.add(BigInteger.ONE)) {
             ItemSet antecedent = new ItemSet();
             ItemSet consequent = new ItemSet();
-            for (int i = 1, j = 0; i < max << 1; i <<= 1, j++) {
-                if ((i & field) == 0) {
+            int j = 0;
+            for (BigInteger i = BigInteger.ONE; max.shiftLeft(1).compareTo(i) > 0; i = i.shiftLeft(1), j++) {
+                if (i.and(field).equals(BigInteger.ZERO)) {
                     antecedent.append(path.get(j));
                 } else {
                     consequent.append(path.get(j));
