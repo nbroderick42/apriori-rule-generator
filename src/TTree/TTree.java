@@ -54,12 +54,12 @@ public class TTree implements RuleGenerator {
         TTree result = new TTree(dataset, minSupport);
         return result.createTtree();
     }
-    
+
     public static TTree fromPTree(Dataset dataset, int minSupport) {
         TTree result = new TTree(dataset, minSupport);
         return result.createFromPTree();
     }
-    
+
     private TTree(Dataset dataset, int minSupport) {
         this.minSup = minSupport;
         this.dataset = dataset;
@@ -78,7 +78,7 @@ public class TTree implements RuleGenerator {
             genLevelN(start, K, new ItemSet());
             K++;
         }
-        
+
         return this;
     }
 
@@ -87,7 +87,7 @@ public class TTree implements RuleGenerator {
         createTtreeTopLevel(pTree);
         genLevelN(start, 1, new ItemSet());
         createTtreeLevelN(pTree);
-        
+
         return this;
     }
 
@@ -119,7 +119,7 @@ public class TTree implements RuleGenerator {
 
     private void addSupportToTTreeLevelN(Node[] ref, int level, ItemSet label, ItemSet anc, int sup) {
         int len = ref.length;
-        
+
         if (level == 1) {
             for (int item : anc) {
                 if (item >= len) {
@@ -129,8 +129,7 @@ public class TTree implements RuleGenerator {
                     ref[item].sup += sup;
                 }
             }
-        }
-        else {
+        } else {
             for (int item : label) {
                 if (item >= len) {
                     break;
@@ -147,18 +146,18 @@ public class TTree implements RuleGenerator {
         start = new Node[dataset.getValueRangeSet().size() + 1];
         values.forEach(si -> start[si] = new Node());
     }
-    
+
     private void createTtreeTopLevel() {
         initTopLevelNodes();
         dataset.getTable().forEach(ri -> ri.forEach(sj -> start[sj].sup++));
         prune(start, 1);
     }
-    
+
     private void createTtreeTopLevel(PTree pTree) {
         initTopLevelNodes();
-        
+
         PTreeTable.Record[][] records = pTree.getPTreeTable().getStart();
-        
+
         for (int i = 1; i < records.length; i++) {
             PTreeTable.Record[] level = records[i];
             if (level != null) {
@@ -166,7 +165,7 @@ public class TTree implements RuleGenerator {
                     ItemSet label = level[j].getLabel();
                     int sup = level[j].getSup();
                     for (int k = 0; k < label.size(); k++) {
-                        start[label.get(k)].sup += sup; 
+                        start[label.get(k)].sup += sup;
                     }
                 }
             }
@@ -175,16 +174,15 @@ public class TTree implements RuleGenerator {
     }
 
     private boolean prune(Node[] ref, int K) {
-        
+
         if (K == 1) {
             boolean allUnsupported = true;
             for (int t = 1; t < ref.length; t++) {
                 if (ref[t] != null && ref[t].sup < minSup) {
                     ref[t] = null;
-                }
-                else {
+                } else {
                     allUnsupported = false;
-                }                
+                }
             }
             return allUnsupported;
         } else {
@@ -196,7 +194,7 @@ public class TTree implements RuleGenerator {
                 }
             }
         }
-        
+
         return false;
     }
 
@@ -242,7 +240,7 @@ public class TTree implements RuleGenerator {
     private void genLevel(Node[] ref, int end, ItemSet I) {
         Node curr = ref[end];
         curr.chdRef = new Node[end];
-        
+
         for (int i = 1; i < end; i++) {
             if (ref[i] != null) {
                 ItemSet newI = append(i, I);

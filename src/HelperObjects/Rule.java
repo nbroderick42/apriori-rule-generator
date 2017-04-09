@@ -16,7 +16,7 @@ public class Rule {
     public Rule(ItemSet antecedent, ItemSet consequent, double sup, double conf) {
         this(null, antecedent, consequent, sup, conf);
     }
-    
+
     public Rule(Dataset dataset, ItemSet antecedent, ItemSet consequent, double sup, double conf) {
         this.dataset = Optional.ofNullable(dataset);
         this.antecedent = antecedent;
@@ -45,15 +45,15 @@ public class Rule {
     public String toString() {
         return new StringBuilder()
                 .append(String.format("%s --> %s\n", makeItemSetToken(antecedent), makeItemSetToken(consequent)))
-                .append(String.format("\tSupport: %f\n", sup))
-                .append(String.format("\tConfidence: %f\n", conf))
+                .append(String.format("\tSupport: %f\n", sup)).append(String.format("\tConfidence: %f\n", conf))
                 .toString();
     }
-    
+
     private String makeItemSetToken(ItemSet is) {
         return is.getItems().stream()
-                .map(i -> dataset.map(d -> String.format("%s=%s", d.getHeaderTokenFromValue(i), d.getTableToken(i))).orElse(i.toString()))
-                .collect(Collectors.joining(", ", "[", "]"));       
+                .map(i -> dataset.map(d -> String.format("%s=%s", d.getHeaderTokenFromValue(i), d.getTableToken(i)))
+                        .orElse(i.toString()))
+                .collect(Collectors.joining(", ", "[", "]"));
     }
 
 }

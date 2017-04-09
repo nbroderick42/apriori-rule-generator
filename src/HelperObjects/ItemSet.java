@@ -7,8 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ItemSet implements Iterable<Integer> {
-    
-    
+
     public static final ItemSet EMPTY = new ItemSet(Collections.emptyList());
 
     private List<Integer> items;
@@ -43,8 +42,7 @@ public class ItemSet implements Iterable<Integer> {
         int idx = getInsertionIndex(items, i);
         if (idx >= 0) {
             System.out.println("Cannot have duplicates in ItemSet");
-        }
-        else {
+        } else {
             items.add(-idx - 1, i);
         }
         return this;
@@ -82,7 +80,7 @@ public class ItemSet implements Iterable<Integer> {
         is.items.forEach(this::append);
         return this;
     }
-    
+
     public ItemSet union(ItemSet is) {
         ItemSet ret = new ItemSet();
         return ret.append(this).append(is);
@@ -107,22 +105,21 @@ public class ItemSet implements Iterable<Integer> {
     public boolean greaterThan(ItemSet r) {
         return compare(items, r.items) > 0;
     }
-    
+
     public static int compare(List<Integer> l1, List<Integer> l2) {
         for (int i = 0; i < l1.size() && i < l2.size(); i++) {
             int r = l1.get(i);
             int s = l2.get(i);
-            
+
             if (r > s) {
                 return 1;
-            }
-            else if (r < s) {
+            } else if (r < s) {
                 return -1;
             }
         }
-        
+
         return l1.size() - l2.size();
-      }
+    }
 
     public boolean contains(ItemSet r) {
         return contains(items, r.items);
@@ -141,24 +138,22 @@ public class ItemSet implements Iterable<Integer> {
         if (l1.size() <= l2.size()) {
             return false;
         }
-        
+
         int i = 0;
         int j = 0;
-        
+
         while (i < l1.size() && j < l2.size()) {
             if (l1.get(i) > l2.get(j)) {
                 return false;
-            }
-            else if (l1.get(i) < l2.get(j)) {
+            } else if (l1.get(i) < l2.get(j)) {
                 i++;
-            }
-            else {
-                i++; 
+            } else {
+                i++;
                 j++;
             }
         }
-        
-        return j >= l2.size();       
+
+        return j >= l2.size();
     }
 
     public static ItemSet del1(ItemSet is) {
@@ -180,7 +175,7 @@ public class ItemSet implements Iterable<Integer> {
         }
         return ret;
     }
-    
+
     public static ItemSet lss(ItemSet I1, ItemSet I2) {
         ItemSet ret = new ItemSet(I1);
         ret.items = getLeadingSubstring(ret.items, I2.items);

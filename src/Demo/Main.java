@@ -26,13 +26,13 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         Path toRead = readPath("Please enter the name of the file you wish to read from: ");
-        
+
         System.out.println("Enter the format of the file: ");
         System.out.println("1. Space-separated");
         System.out.println("2. Comma-separated");
         int fileFormatChoice = selectIntegerInRange("Enter choice: ", 1, 2) - 1;
         FileFormat fileFormat = FileFormat.values()[fileFormatChoice];
-        
+
         System.out.println("Enter the format of the data: ");
         System.out.println("1. Integer");
         System.out.println("2. String");
@@ -48,19 +48,18 @@ public class Main {
         System.out.print("Generating dataset from file... ");
         Dataset dataset = Dataset.build(toRead, fileFormat, dataType);
         System.out.println("done");
-        
+
         int tableSize = dataset.getTable().size();
         if (tableSize <= 25) {
             System.out.println();
             System.out.println(dataset);
             System.out.println();
-        }
-        else {
+        } else {
             System.out.format("Dataset with %d rows read", tableSize);
         }
-        
+
         int minSupCount = convertToIntegerNumerator(minSup, tableSize);
-        
+
         List<Rule> rules = generateRules(dataset, minSupCount, minConf);
 
         writeRulesToFileFromList(rules, toWrite);
@@ -104,38 +103,38 @@ public class Main {
         }
 
     }
-    
+
     private static List<Rule> generateRules(Dataset dataset, int minSupport, double minConf) throws IOException {
         System.out.println("Enter the algorithm to run: ");
         System.out.println("1. ARM using Total Support Tree");
         System.out.println("2. ARM using Apriori-TFP");
-        
+
         int choice = selectIntegerInRange("Enter selection: ", 1, 2);
         BiFunction<Dataset, Integer, RuleGenerator> ruleGenerator;
-        
+
         switch (choice) {
         case 1:
             ruleGenerator = TTree::fromDataset;
             break;
-        case 2: 
+        case 2:
             ruleGenerator = TTree::fromPTree;
             break;
         default:
             throw new RuntimeException("Unhandled switch case in ruleGenerator");
         }
-        
+
         System.out.print("Generating rules...");
         long start = System.currentTimeMillis();
-        
+
         List<Rule> result = ruleGenerator.apply(dataset, minSupport).generateRules(minConf);
-        
+
         long end = System.currentTimeMillis();
         System.out.println("done");
         System.out.format("Total algorithmic time: %dms\n", end - start);
-        
-        return result;        
-    } 
-    
+
+        return result;
+    }
+
     private static int selectIntegerInRange(String prompt, int begin, int end) throws IOException {
         while (true) {
             try {
@@ -151,10 +150,10 @@ public class Main {
             }
         }
     }
-    
+
     public static void writeRulesToFileFromList(List<Rule> rules, String filename) throws IOException {
         Path out = Paths.get(filename);
-        Files.deleteIfExists(out);      
+        Files.deleteIfExists(out);
         List<String> output = rules.stream().map(Rule::toString).collect(toList());
         Files.write(out, output, StandardOpenOption.CREATE_NEW);
     }

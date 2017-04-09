@@ -139,7 +139,7 @@ public class Dataset {
     public static Dataset build(Path path, FileFormat format, DataType type) throws IOException {
         return type.build(path, format);
     }
-    
+
     /*
      * Returns a dataset generated from a file without assumed prior labels
      */
@@ -358,14 +358,14 @@ public class Dataset {
                 .sorted(ItemSet::compare).map(l -> l.stream().map(Object::toString).collect(joining("\t")))
                 .collect(joining("\n"));
     }
-    
+
     public enum DataType implements DatasetBuilder {
         INTEGER {
             @Override
             public Dataset build(Path path, FileFormat fileFormat) throws IOException {
                 return fromIntegerFile(path, fileFormat);
             }
-        }, 
+        },
         STRING {
             @Override
             public Dataset build(Path path, FileFormat fileFormat) throws IOException {
@@ -373,7 +373,7 @@ public class Dataset {
             }
         };
     }
-    
+
     @FunctionalInterface
     public interface DatasetBuilder {
         public Dataset build(Path path, FileFormat fileFormat) throws IOException;

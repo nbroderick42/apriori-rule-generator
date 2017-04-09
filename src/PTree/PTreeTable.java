@@ -4,16 +4,16 @@ import HelperObjects.ItemSet;
 import PTree.PTree.Node;
 
 public class PTreeTable {
-    
+
     private PTree ptree;
     private Record[][] start;
     private int[] marker;
-    
+
     public static class Record {
         private ItemSet label;
         private ItemSet ancestors;
         private int sup;
-        
+
         private Record(ItemSet label, ItemSet ancestors, int sup) {
             this.label = label;
             this.ancestors = ancestors;
@@ -32,7 +32,7 @@ public class PTreeTable {
             return sup;
         }
     }
-    
+
     public PTreeTable(PTree ptree) {
         this.ptree = ptree;
         this.start = new Record[ptree.getStart().length + 1][];
@@ -43,7 +43,7 @@ public class PTreeTable {
     private void createPTreeTable() {
         PTree.Node[] pTreeStart = ptree.getStart();
         int[] nodeCardinalityCounts = ptree.getNodeCardinalityCounts();
-        
+
         for (int i = 1; i < nodeCardinalityCounts.length; i++) {
             int cardinality = nodeCardinalityCounts[i];
             if (cardinality > 0) {
@@ -57,19 +57,18 @@ public class PTreeTable {
                 createPTreeTable(pTreeStart[i].chdRef, is, 1);
             }
         }
-        
+
     }
 
     private void addToTable(ItemSet ancestors, ItemSet label, int sup, int level) {
         Record newRecord;
-        
+
         if (ancestors.isEmpty()) {
             newRecord = new Record(label, label, sup);
-        }
-        else {
+        } else {
             newRecord = new Record(ancestors, ancestors.union(label), sup);
         }
-        
+
         start[level][marker[level]] = newRecord;
         marker[level]++;
     }
@@ -77,9 +76,9 @@ public class PTreeTable {
     private void createPTreeTable(Node pTreeRef, ItemSet is, int currLevel) {
         if (pTreeRef != null) {
             int level = currLevel + pTreeRef.getI().size();
-            
+
             addToTable(pTreeRef.getI(), is, pTreeRef.getSup(), level);
-            
+
             createPTreeTable(pTreeRef.getChdRef(), is.union(pTreeRef.getI()), level);
             createPTreeTable(pTreeRef.getSibRef(), is, currLevel);
         }
@@ -88,6 +87,5 @@ public class PTreeTable {
     public Record[][] getStart() {
         return start;
     }
-    
-    
+
 }
