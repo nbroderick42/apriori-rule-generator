@@ -4,13 +4,11 @@ import java.util.List;
 
 import HelperObjects.Dataset;
 import HelperObjects.ItemSet;
-import HelperObjects.Rule;
-import HelperObjects.RuleGenerator;
 
 /**
  * Created by Jonathan McDevitt on 2017-03-24.
  */
-public class PTree implements RuleGenerator{
+public class PTree {
 
     private Dataset dataset;
     private NodeTop[] start;
@@ -305,11 +303,6 @@ public class PTree implements RuleGenerator{
         }
 
     }
-
-    @Override
-    public List<Rule> generateRules(double confidence) {
-        return null;
-    }
     
     public Dataset getDataset() {
         return dataset;
@@ -318,7 +311,7 @@ public class PTree implements RuleGenerator{
     public int[] getNodeCardinalityCounts() {
         return nodeCardinalityCounts;
     }
-    
+
     public NodeTop[] getStart() {
         return start;
     }

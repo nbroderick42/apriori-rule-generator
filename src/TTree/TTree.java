@@ -1,9 +1,7 @@
 package TTree;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.SortedSet;
 
 import HelperObjects.Dataset;
@@ -51,12 +49,22 @@ public class TTree implements RuleGenerator {
         }
     }
 
-    public TTree(Dataset dataset, int minSupport) {
+    public static TTree fromDataset(Dataset dataset, int minSupport) {
+        TTree result = new TTree(dataset, minSupport);
+        return result.createTtree();
+    }
+    
+    public static TTree fromPTree(Dataset dataset, int minSupport) {
+        TTree result = new TTree(dataset, minSupport);
+        return result.createFromPTree();
+    }
+    
+    private TTree(Dataset dataset, int minSupport) {
         this.minSup = minSupport;
         this.dataset = dataset;
     }
 
-    public void createTtree() {
+    public TTree createTtree() {
         createTtreeTopLevel();
         genLevelN(start, 1, new ItemSet());
 
@@ -69,15 +77,17 @@ public class TTree implements RuleGenerator {
             genLevelN(start, K, new ItemSet());
             K++;
         }
+        
+        return this;
     }
 
-    public void createFromPTree(int minSup) {
-        this.minSup = minSup;
-        
+    public TTree createFromPTree() {
         PTree pTree = new PTree(dataset);
         createTtreeTopLevel(pTree);
         genLevelN(start, 1, new ItemSet());
         createTtreeLevelN(pTree);
+        
+        return this;
     }
 
     private void createTtreeLevelN(PTree pTree) {
@@ -240,9 +250,6 @@ public class TTree implements RuleGenerator {
                     isNewLevel = true;
                 } else {
                     curr.chdRef[i] = null;
-                    if (allNull(curr.chdRef)) {
-                        curr.chdRef = null;
-                    }
                 }
             }
         }
@@ -309,12 +316,8 @@ public class TTree implements RuleGenerator {
     public List<Rule> generateRules(double confidence) {
         return generateRules(confidence, start, null, 0);
     }
-    
-    private static boolean allNull(Node[] ref) {
-        return Arrays.stream(ref).allMatch(Objects::isNull);
-    }
 
-    List<Rule> generateRules(double confidence, Node[] layer, List<Integer> path, int level) {
+    public List<Rule> generateRules(double confidence, Node[] layer, List<Integer> path, int level) {
         List<Rule> rules = new ArrayList<>();
         for (int i = 0; i < layer.length; i++) {
             /** If we are at the beginning, initialize the path */

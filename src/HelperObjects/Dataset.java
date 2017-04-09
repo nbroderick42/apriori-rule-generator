@@ -136,10 +136,14 @@ public class Dataset {
         }
     }
 
+    public static Dataset build(Path path, FileFormat format, DataType type) throws IOException {
+        return type.build(path, format);
+    }
+    
     /*
      * Returns a dataset generated from a file without assumed prior labels
      */
-    public static Dataset fromFile(Path path, FileFormat format) throws IOException {
+    private static Dataset fromFile(Path path, FileFormat format) throws IOException {
         LabelGenerator tableLabelGenerator = new LabelGenerator(1);
         LabelGenerator headerLabelGenerator = new LabelGenerator(1);
         return fromFile(path, format, tableLabelGenerator, headerLabelGenerator);
@@ -148,7 +152,7 @@ public class Dataset {
     /*
      * Returns a dataset generated from a file without assumed prior labels
      */
-    public static Dataset fromIntegerFile(Path path, FileFormat format) throws IOException {
+    private static Dataset fromIntegerFile(Path path, FileFormat format) throws IOException {
         LabelGenerator tableLabelGenerator = new IntegerLabelGenerator();
         LabelGenerator headerLabelGenerator = new LabelGenerator(1);
         return fromFile(path, format, tableLabelGenerator, headerLabelGenerator);
@@ -354,4 +358,25 @@ public class Dataset {
                 .sorted(ItemSet::compare).map(l -> l.stream().map(Object::toString).collect(joining("\t")))
                 .collect(joining("\n"));
     }
+    
+    public enum DataType implements DatasetBuilder {
+        INTEGER {
+            @Override
+            public Dataset build(Path path, FileFormat fileFormat) throws IOException {
+                return fromIntegerFile(path, fileFormat);
+            }
+        }, 
+        STRING {
+            @Override
+            public Dataset build(Path path, FileFormat fileFormat) throws IOException {
+                return fromFile(path, fileFormat);
+            }
+        };
+    }
+    
+    @FunctionalInterface
+    public interface DatasetBuilder {
+        public Dataset build(Path path, FileFormat fileFormat) throws IOException;
+    }
+
 }
