@@ -13,7 +13,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import HelperObjects.DataFileHandle;
 import HelperObjects.Dataset;
 import HelperObjects.Dataset.DataType;
 import HelperObjects.Dataset.FileFormat;
