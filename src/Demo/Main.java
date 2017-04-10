@@ -13,6 +13,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.function.BiFunction;
 
+import HelperObjects.DataFileHandle;
 import HelperObjects.Dataset;
 import HelperObjects.Dataset.DataType;
 import HelperObjects.Dataset.FileFormat;
@@ -25,6 +26,9 @@ public class Main {
     private static final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
     public static void main(String[] args) throws IOException {
+        DataFileHandle.fromPath(Paths.get("data1"), FileFormat.SPACE_SEPARATED).forEach(System.out::println);
+        System.exit(1);
+        
         Path toRead = readPath("Please enter the name of the file you wish to read from: ");
 
         System.out.println("Enter the format of the file: ");

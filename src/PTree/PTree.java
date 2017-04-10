@@ -172,7 +172,7 @@ public class PTree {
             ref.getSibRef().setSibRef(tempRef);
             moveSiblings(ref, newPref);
         } else {
-            addToPtree(LinkFlag.SIBLING, ref.getSibRef(), r, ref, parentLength + ref.getI().size(), itemSetLength);
+            addToPtree(LinkFlag.SIBLING, ref.getSibRef(), r, ref, parentLength, itemSetLength);
         }
     }
 
