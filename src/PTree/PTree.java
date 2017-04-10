@@ -68,10 +68,6 @@ public class PTree {
         }
     }
 
-    private NodeInternal createPTreeInternalNode(ItemSet I, int level) {
-        return createPTreeInternalNode(I, 0, level);
-    }
-
     private NodeInternal createPTreeInternalNode(ItemSet I, int sup, int level) {
         nodeCardinalityCounts[level]++;
         return new NodeInternal(I, sup);
@@ -133,7 +129,7 @@ public class PTree {
             ref.setI(ItemSet.delN(ref.getI(), lss));
             moveSiblings(ref, newPref);
         } else {
-            NodeInternal newSref = createPTreeInternalNode(r, itemSetLength);
+            NodeInternal newSref = createPTreeInternalNode(r, 1, itemSetLength);
             newSref.setSibRef(ref);
             f.link(oldRef, newSref);
         }
