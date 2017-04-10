@@ -105,10 +105,14 @@ public class TTree implements RuleGenerator {
 
     private void addSupportToTTreeLevelN(PTree pTree, int level) {
         PTreeTable.Record[][] table = pTree.getPTreeTable().getStart();
+        int[] cardinalityCounts = pTree.getNodeCardinalityCounts();
+        addSupportToTTreeLevelN(table, cardinalityCounts, level);
+    }
+    
+    private void addSupportToTTreeLevelN(PTreeTable.Record[][] table, int[] cardinaltyCounts, int level) {
         for (int i = level; i < table.length; i++) {
-            PTreeTable.Record[] row = table[i];
-            if (row != null) {
-                int count = pTree.getNodeCardinalityCounts()[i];
+            if (table[i] != null) {
+                int count = cardinaltyCounts[i];
                 for (int j = 0; j < count; j++) {
                     PTreeTable.Record r = table[i][j];
                     addSupportToTTreeLevelN(start, level, r.getLabel(), r.getAncestors(), r.getSup());
@@ -149,7 +153,7 @@ public class TTree implements RuleGenerator {
 
     private void createTtreeTopLevel() {
         initTopLevelNodes();
-        dataset.getTable().forEach(ri -> ri.forEach(sj -> start[sj].sup++));
+        dataset.getItemSets().forEach(ri -> ri.forEach(sj -> start[sj].sup++));
         prune(start, 1);
     }
 
@@ -180,7 +184,7 @@ public class TTree implements RuleGenerator {
             for (int t = 1; t < ref.length; t++) {
                 if (ref[t] != null && ref[t].sup < minSup) {
                     ref[t] = null;
-                } else {
+                } else if (ref[t] != null) {
                     allUnsupported = false;
                 }
             }
@@ -199,11 +203,10 @@ public class TTree implements RuleGenerator {
     }
 
     private void addSupport(int K) {
-        List<List<Integer>> R = dataset.getTable();
-        R.forEach(ri -> addSup(start, K, ri.size(), ri));
+        dataset.getItemSets().forEach(ri -> addSup(start, K, ri.size(), ri));
     }
 
-    private void addSup(Node[] ref, int K, int end, List<Integer> r) {
+    private void addSup(Node[] ref, int K, int end, ItemSet r) {
         if (K == 1) {
             for (int i = 0; i < end; i++) {
                 int si = r.get(i);
@@ -391,5 +394,27 @@ public class TTree implements RuleGenerator {
 
         return result;
     }
-
+    
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        toString(sb, start, 0);
+        return sb.toString();
+    }
+    
+    private void toString(StringBuilder sb, Node[] layer, int level) {
+        if (layer != null) {
+            String result = "";
+            
+            for (int i = 0; i < level; i++) result += "\t";
+            for (int i = 0; i < layer.length; i++) result += (layer[i] != null ? i : "x") + " ";
+            
+            sb.append(result + "\n");
+            
+            for (int i = 0; i < layer.length; i++) {
+                if (layer[i] != null) {
+                    toString(sb, layer[i].chdRef, level + 1);
+                }
+            }
+        }
+    }
 }
