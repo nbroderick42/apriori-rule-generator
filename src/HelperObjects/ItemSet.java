@@ -11,6 +11,7 @@ public class ItemSet implements Iterable<Integer> {
     public static final ItemSet EMPTY = new ItemSet(Collections.emptyList());
 
     private List<Integer> items;
+    private List<ItemSet> itemSets;
 
     public ItemSet() {
         items = new ArrayList<>();

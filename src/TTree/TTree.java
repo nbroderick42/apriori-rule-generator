@@ -149,7 +149,7 @@ public class TTree implements RuleGenerator {
 
     private void createTtreeTopLevel() {
         initTopLevelNodes();
-        dataset.getTable().forEach(ri -> ri.forEach(sj -> start[sj].sup++));
+        dataset.getItemSets().forEach(ri -> ri.forEach(sj -> start[sj].sup++));
         prune(start, 1);
     }
 
@@ -199,11 +199,10 @@ public class TTree implements RuleGenerator {
     }
 
     private void addSupport(int K) {
-        List<List<Integer>> R = dataset.getTable();
-        R.forEach(ri -> addSup(start, K, ri.size(), ri));
+        dataset.getItemSets().forEach(ri -> addSup(start, K, ri.size(), ri));
     }
 
-    private void addSup(Node[] ref, int K, int end, List<Integer> r) {
+    private void addSup(Node[] ref, int K, int end, ItemSet r) {
         if (K == 1) {
             for (int i = 0; i < end; i++) {
                 int si = r.get(i);
@@ -391,5 +390,4 @@ public class TTree implements RuleGenerator {
 
         return result;
     }
-
 }

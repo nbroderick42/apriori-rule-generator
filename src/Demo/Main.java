@@ -64,8 +64,6 @@ public class Main {
         List<Rule> rules = generateRules(dataset, minSupCount, minConf);
 
         writeRulesToFileFromList(rules, toWrite);
-
-        System.out.format("Rule generation complete, written to '%s'\n", toWrite);
     }
 
     private static int convertToIntegerNumerator(double d, int size) {

@@ -61,6 +61,8 @@ public class Dataset {
 
     private Map<Integer, String> valueToHeaderTokenMap;
 
+    private List<ItemSet> itemSets;
+
     private static final Function<Integer, Predicate<String[]>> hasCorrectNumberOfRows
             = rows -> (tks -> tks.length == rows);
     private static final Predicate<String> isNotEmpty = s -> !s.isEmpty();
@@ -377,6 +379,13 @@ public class Dataset {
     @FunctionalInterface
     public interface DatasetBuilder {
         public Dataset build(Path path, FileFormat fileFormat) throws IOException;
+    }
+    
+    public List<ItemSet> getItemSets() {
+        if (itemSets == null) {
+            itemSets = table.stream().map(ItemSet::new).collect(toList());
+        }
+        return itemSets;
     }
 
 }
