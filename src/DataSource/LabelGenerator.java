@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public class LabelGenerator {
-    
+
     private final int first;
     private Map<Integer, Map<String, Integer>> tokenToLabelMap;
     private Supplier<Integer> intGenerator;
@@ -23,8 +23,7 @@ public class LabelGenerator {
             int newLabel = intGenerator.get();
             tokenToLabelMap.get(attr).put(token, newLabel);
             return newLabel;
-        }
-        else {
+        } else {
             return tokenToLabelMap.get(attr).get(token);
         }
     }
@@ -32,11 +31,11 @@ public class LabelGenerator {
     public int getFirstValue() {
         return first;
     }
-    
+
     public int getNumLabels() {
         return tokenToLabelMap.values().size();
     }
-    
+
     private static Supplier<Integer> makeIntGenerator(int start) {
         return new Supplier<Integer>() {
             int idx = start;

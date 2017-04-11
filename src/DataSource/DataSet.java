@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class DataSet extends DataSource {
-    
+
     private List<ItemSet> itemSets;
-    
+
     public DataSet(Path path, FileFormat fileFormat) throws IOException {
         super(path, fileFormat);
         itemSets = new ArrayList<>();

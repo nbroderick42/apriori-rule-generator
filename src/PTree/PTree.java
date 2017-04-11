@@ -79,7 +79,8 @@ public class PTree {
         }
     }
 
-    private void parent(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength, int itemSetLength) {
+    private void parent(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength,
+            int itemSetLength) {
         PTreeNodeInternal newRef = createPTreeInternalNode(r, ref.sup + 1, itemSetLength);
         newRef.chdRef = ref;
         link.accept(oldRef, newRef);
@@ -98,7 +99,8 @@ public class PTree {
         }
     }
 
-    private void eldSib(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength, int itemSetLength) {
+    private void eldSib(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength,
+            int itemSetLength) {
         ItemSet lss = ItemSet.lss(r, ref.getI());
         if (!lss.isEmpty() && !lss.equals(oldRef.getI())) {
             PTreeNodeInternal newPref = createPTreeInternalNode(lss, ref.getSup() + 1, lss.size() + parentLength - 1);
@@ -115,7 +117,8 @@ public class PTree {
         }
     }
 
-    private void yngSib(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength, int itemSetLength) {
+    private void yngSib(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength,
+            int itemSetLength) {
         if (!ref.hasSiblings()) {
             yngSib1(link, ref, r, oldRef, parentLength, itemSetLength);
         } else {
@@ -123,7 +126,8 @@ public class PTree {
         }
     }
 
-    private void yngSib1(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength, int itemSetLength) {
+    private void yngSib1(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength,
+            int itemSetLength) {
         ItemSet lss = ItemSet.lss(r, ref.getI());
         if (!lss.isEmpty() && !lss.equals(oldRef.getI())) {
             PTreeNodeInternal newPref = createPTreeInternalNode(lss, ref.getSup() + 1, lss.size() + parentLength - 1);
@@ -136,7 +140,8 @@ public class PTree {
         }
     }
 
-    private void yngSib2(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength, int itemSetLength) {
+    private void yngSib2(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength,
+            int itemSetLength) {
         ItemSet lss = ItemSet.lss(r, ref.getI());
         if (!lss.isEmpty() && !lss.equals(oldRef.getI())) {
             PTreeNodeInternal newPref = createPTreeInternalNode(lss, ref.getSup() + 1, lss.size() + parentLength - 1);

@@ -24,7 +24,7 @@ abstract class PTreeNode {
     protected boolean hasChild() {
         return chdRef != null;
     }
-    
+
     protected void incSup(int sup) {
         this.sup += sup;
     }
@@ -38,14 +38,15 @@ abstract class PTreeNode {
     abstract void setSibRef(PTreeNode sibRef);
 
     abstract boolean hasSiblings();
-    
+
     @FunctionalInterface
-    public static interface LinkFunction extends BiConsumer<PTreeNode, PTreeNode> {};
-    
+    public static interface LinkFunction extends BiConsumer<PTreeNode, PTreeNode> {
+    };
+
     public static void linkAsChd(PTreeNode src, PTreeNode tgt) {
         src.setChdRef(tgt);
     }
-    
+
     public static void linkAsSib(PTreeNode src, PTreeNode tgt) {
         src.setSibRef(tgt);
     }

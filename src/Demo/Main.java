@@ -22,7 +22,7 @@ public class Main {
     private static final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
     public static void main(String[] args) throws IOException {
-        
+
         Path toRead = readPath("Please enter the name of the file you wish to read from: ");
 
         System.out.println("Enter the format of the file: ");
@@ -80,13 +80,13 @@ public class Main {
         System.out.println("Enter the algorithm to run: ");
         System.out.println("1. ARM using Total Support Tree");
         System.out.println("2. ARM using Apriori-TFP");
-        
+
         long start, end;
         List<Rule> result;
         int choice = selectIntegerInRange("Enter selection: ", 1, 2);
-        
+
         System.out.print("Generating rules...");
-        
+
         switch (choice) {
         case 1:
             start = System.currentTimeMillis();
@@ -101,7 +101,7 @@ public class Main {
         default:
             throw new RuntimeException("Unhandled switch case in ruleGenerator");
         }
-        
+
         System.out.println("done");
         System.out.format("Total algorithmic time: %dms\n", end - start);
 
