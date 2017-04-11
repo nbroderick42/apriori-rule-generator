@@ -57,8 +57,8 @@ public class Main {
         Path toRead = readPath("Please enter the name of the file you wish to read from: ");
 
         System.out.println("Enter the format of the file: ");
-        System.out.println("1. Space-separated");
-        System.out.println("2. Comma-separated");
+        System.out.println("1. Comma-separated");
+        System.out.println("2. Space-separated");
         int fileFormatChoice = selectIntegerInRange("Enter choice: ", 1, 2) - 1;
         FileFormat fileFormat = FileFormat.values()[fileFormatChoice];
 
