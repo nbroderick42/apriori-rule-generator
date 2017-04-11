@@ -9,14 +9,7 @@ import DataSource.ItemSet;
  * Created by Jonathan McDevitt on 2017-03-24.
  */
 public class PTree {
-
-    private static void moveSiblings(PTreeNode from, PTreeNode to) {
-        if (from.hasSiblings()) {
-            to.setSibRef(from.getSibRef());
-            from.setSibRef(null);
-        }
-    }
-
+    
     private DataSource dataset;
     private int[] nodeCardinalityCounts;
     private PTreeTable pTreeTable;
@@ -81,7 +74,7 @@ public class PTree {
     private void child(PTreeNode ref, ItemSet r, int parentLength, int itemSetLength) {
         ref.incSup(1);
         if (!ref.hasChild()) {
-            PTreeNodeInternal newRef = createPTreeInternalNode(ItemSet.delN(r, ref.getI()), 1, itemSetLength);
+            PTreeNode newRef = createPTreeInternalNode(ItemSet.delN(r, ref.getI()), 1, itemSetLength);
             ref.setChdRef(newRef);
         } else {
             addToPtree(PTreeNode::linkAsChd, ref.getChdRef(), ItemSet.delN(r, ref.getI()), ref,
@@ -101,14 +94,15 @@ public class PTree {
     private void eldSib(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength,
             int itemSetLength) {
         ItemSet lss = ItemSet.lss(r, ref.getI());
-        if (!lss.isEmpty() && !lss.equals(oldRef.getI())) {
+        if (!lss.isEmpty()) {
             PTreeNodeInternal newPref = createPTreeInternalNode(lss, ref.getSup() + 1, lss.size() + parentLength - 1);
             link.accept(oldRef, newPref);
             r = ItemSet.delN(r, lss);
             newPref.setChdRef(createPTreeInternalNode(r, 1, itemSetLength));
-            newPref.getChdRef().setSibRef(ref);
             ref.setI(ItemSet.delN(ref.getI(), lss));
-            moveSiblings(ref, newPref);
+            newPref.getChdRef().setSibRef(ref);
+            newPref.setSibRef(ref.getSibRef());
+            ref.setSibRef(null);
         } else {
             PTreeNodeInternal newSref = createPTreeInternalNode(r, 1, itemSetLength);
             newSref.setSibRef(ref);
@@ -134,11 +128,13 @@ public class PTree {
 
     private void parent(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength,
             int itemSetLength) {
-        PTreeNodeInternal newRef = createPTreeInternalNode(r, ref.sup + 1, itemSetLength);
-        newRef.chdRef = ref;
+        PTreeNode newRef = createPTreeInternalNode(r, ref.getSup() + 1, itemSetLength);
+        newRef.setChdRef(ref);
         link.accept(oldRef, newRef);
         ref.setI(ItemSet.delN(ref.getI(), r));
-        moveSiblings(ref, newRef);
+        
+        newRef.setSibRef(ref.getSibRef());
+        ref.setSibRef(null);
     }
 
     private void yngSib(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength,
@@ -153,7 +149,7 @@ public class PTree {
     private void yngSib1(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength,
             int itemSetLength) {
         ItemSet lss = ItemSet.lss(r, ref.getI());
-        if (!lss.isEmpty() && !lss.equals(oldRef.getI())) {
+        if (!lss.isEmpty()) {
             PTreeNodeInternal newPref = createPTreeInternalNode(lss, ref.getSup() + 1, lss.size() + parentLength - 1);
             link.accept(oldRef, newPref);
             ref.setI(ItemSet.delN(ref.getI(), lss));
@@ -167,15 +163,15 @@ public class PTree {
     private void yngSib2(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength,
             int itemSetLength) {
         ItemSet lss = ItemSet.lss(r, ref.getI());
-        if (!lss.isEmpty() && !lss.equals(oldRef.getI())) {
+        if (!lss.isEmpty()) {
             PTreeNodeInternal newPref = createPTreeInternalNode(lss, ref.getSup() + 1, lss.size() + parentLength - 1);
             link.accept(oldRef, newPref);
             ref.setI(ItemSet.delN(ref.getI(), lss));
             newPref.setChdRef(ref);
             PTreeNode tempRef = ref.getSibRef();
+            r = ItemSet.delN(r, lss);
             ref.setSibRef(createPTreeInternalNode(r, 1, itemSetLength));
-            ref.getSibRef().setSibRef(tempRef);
-            moveSiblings(ref, newPref);
+            newPref.setSibRef(tempRef);
         } else {
             addToPtree(PTreeNode::linkAsSib, ref.getSibRef(), r, ref, parentLength, itemSetLength);
         }

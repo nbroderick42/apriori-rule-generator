@@ -319,11 +319,10 @@ public class TTree {
     }
 
     private void initTopLevelNodes() throws IOException {
-        List<TTreeNode> topLevel = new ArrayList<>();
-        dataset.forEach(is -> topLevel.add(new TTreeNode()));
-
-        start = new TTreeNode[dataset.getNumRecords() + 1];
-        topLevel.toArray(start);
+        start = new TTreeNode[dataset.getNumUniqueItems() + 1];
+        for (int i = 1; i < start.length; i++) {
+            start[i] = new TTreeNode();
+        }
     }
 
     private boolean prune(TTreeNode[] ref, int K) {

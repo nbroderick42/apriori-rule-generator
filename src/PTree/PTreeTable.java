@@ -38,6 +38,7 @@ public class PTreeTable {
                 start[i] = new PTreeTableRecord[cardinality];
             }
         }
+
         for (int i = 0; i < pTreeStart.length; i++) {
             if (pTreeStart[i] != null) {
                 ItemSet is = new ItemSet(i);
