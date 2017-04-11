@@ -1,11 +1,11 @@
 package TTree;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.SortedSet;
 
-import HelperObjects.Dataset;
+import HelperObjects.DataFileHandle;
 import HelperObjects.ItemSet;
 import HelperObjects.Rule;
 import HelperObjects.RuleGenerator;
@@ -28,7 +28,7 @@ import PTree.PTreeTable;
 public class TTree implements RuleGenerator {
 
     private Node[] start;
-    private Dataset dataset;
+    private DataFileHandle dataset;
     private boolean isNewLevel;
     private int minSup;
 
@@ -50,22 +50,26 @@ public class TTree implements RuleGenerator {
         }
     }
 
-    public static TTree fromDataset(Dataset dataset, int minSupport) {
-        TTree result = new TTree(dataset, minSupport);
+    public static TTree fromDataset(DataFileHandle dataset, double minSup) throws IOException {
+        TTree result = new TTree(dataset, minSup);
         return result.createTtree();
     }
 
-    public static TTree fromPTree(Dataset dataset, int minSupport) {
-        TTree result = new TTree(dataset, minSupport);
+    public static TTree fromPTree(DataFileHandle dataset, double minSup) throws IOException {
+        TTree result = new TTree(dataset, minSup);
         return result.createFromPTree();
     }
 
-    private TTree(Dataset dataset, int minSupport) {
-        this.minSup = minSupport;
+    private TTree(DataFileHandle dataset, double minSup) {
+        this.minSup = convertToIntegerNumerator(minSup, dataset.getNumRecords());
         this.dataset = dataset;
     }
+    
+    private static int convertToIntegerNumerator(double d, int size) {
+        return (int) Math.ceil(d * size);
+    }
 
-    public TTree createTtree() {
+    public TTree createTtree() throws IOException {
         createTtreeTopLevel();
         genLevelN(start, 1, new ItemSet());
 
@@ -82,7 +86,7 @@ public class TTree implements RuleGenerator {
         return this;
     }
 
-    public TTree createFromPTree() {
+    public TTree createFromPTree() throws IOException {
         PTree pTree = new PTree(dataset);
         createTtreeTopLevel(pTree);
         genLevelN(start, 1, new ItemSet());
@@ -145,19 +149,21 @@ public class TTree implements RuleGenerator {
         }
     }
 
-    private void initTopLevelNodes() {
-        SortedSet<Integer> values = dataset.getValueRangeSet();
-        start = new Node[dataset.getValueRangeSet().size() + 1];
-        values.forEach(si -> start[si] = new Node());
+    private void initTopLevelNodes() throws IOException {
+        List<Node> topLevel = new ArrayList<>();
+        dataset.forEach(is -> topLevel.add(new Node()));
+        
+        start = new Node[dataset.getNumRecords() + 1];
+        topLevel.toArray(start);
     }
 
-    private void createTtreeTopLevel() {
+    private void createTtreeTopLevel() throws IOException {
         initTopLevelNodes();
-        dataset.getItemSets().forEach(ri -> ri.forEach(sj -> start[sj].sup++));
+        dataset.forEach(ri -> ri.forEach(sj -> start[sj].sup++));
         prune(start, 1);
     }
 
-    private void createTtreeTopLevel(PTree pTree) {
+    private void createTtreeTopLevel(PTree pTree) throws IOException {
         initTopLevelNodes();
 
         PTreeTable.Record[][] records = pTree.getPTreeTable().getStart();
@@ -202,8 +208,8 @@ public class TTree implements RuleGenerator {
         return false;
     }
 
-    private void addSupport(int K) {
-        dataset.getItemSets().forEach(ri -> addSup(start, K, ri.size(), ri));
+    private void addSupport(int K) throws IOException {
+        dataset.forEach(ri -> addSup(start, K, ri.size(), ri));
     }
 
     private void addSup(Node[] ref, int K, int end, ItemSet r) {
@@ -360,7 +366,7 @@ public class TTree implements RuleGenerator {
     private List<Rule> generatePartitions(double minConf, List<Integer> path) {
         assert path.size() >= 2 : "Need at least two elements in path";
 
-        int datasetSize = dataset.getTable().size();
+        int datasetSize = dataset.getNumRecords();
         double unionSup = (double) findInTtree(new ItemSet(path)).sup / (double) datasetSize;
         List<Rule> result = new ArrayList<>();
 

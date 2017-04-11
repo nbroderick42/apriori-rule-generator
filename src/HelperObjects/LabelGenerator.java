@@ -7,7 +7,6 @@ import java.util.function.Supplier;
 public class LabelGenerator {
     private final int first;
     private Map<Integer, Map<String, Integer>> tokenToLabelMap;
-    private Map<Integer, Map<Integer, String>> labelToTokenMap;
     private Supplier<Integer> intGenerator;
 
     LabelGenerator(int start) {
@@ -26,7 +25,6 @@ public class LabelGenerator {
         if (!tokenToLabelMap.get(attr).containsKey(token)) {
             int newLabel = intGenerator.get();
             tokenToLabelMap.get(attr).put(token, newLabel);
-            labelToTokenMap.putIfAbsent(attr, new HashMap<>()).put(newLabel, token);
             return newLabel;
         }
         else {

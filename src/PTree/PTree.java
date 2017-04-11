@@ -1,8 +1,8 @@
 package PTree;
 
-import java.util.List;
+import java.io.IOException;
 
-import HelperObjects.Dataset;
+import HelperObjects.DataFileHandle;
 import HelperObjects.ItemSet;
 
 /**
@@ -10,7 +10,7 @@ import HelperObjects.ItemSet;
  */
 public class PTree {
 
-    private Dataset dataset;
+    private DataFileHandle dataset;
     private NodeTop[] start;
     private int[] nodeCardinalityCounts;
     private PTreeTable pTreeTable;
@@ -33,24 +33,21 @@ public class PTree {
 
     }
 
-    public PTree(Dataset dataset) {
+    public PTree(DataFileHandle dataset) throws IOException {
         this.dataset = dataset;
-        this.start = new NodeTop[dataset.getValueRangeSet().size() + 1];
-        this.nodeCardinalityCounts = new int[dataset.getValueRangeSet().size() + 1];
+        this.start = new NodeTop[dataset.getNumUniqueItems() + 1];
+        this.nodeCardinalityCounts = new int[dataset.getNumUniqueItems() + 1];
 
         createPtree();
 
         this.pTreeTable = new PTreeTable(this);
     }
 
-    private void createPtree() {
-        List<List<Integer>> R = dataset.getTable();
-        R.forEach(this::addToPtreeTopLevel);
+    private void createPtree() throws IOException {
+        dataset.forEach(this::addToPtreeTopLevel);
     }
 
-    private void addToPtreeTopLevel(List<Integer> r) {
-        ItemSet is = new ItemSet(r);
-
+    private void addToPtreeTopLevel(ItemSet is) {
         if (is.isEmpty()) {
             return;
         }
@@ -63,8 +60,8 @@ public class PTree {
             start[r0].sup++;
         }
 
-        if (r.size() > 1) {
-            addToPtree(LinkFlag.CHILD, start[r0].chdRef, ItemSet.del1(is), start[r0], 2, r.size());
+        if (is.size() > 1) {
+            addToPtree(LinkFlag.CHILD, start[r0].chdRef, ItemSet.del1(is), start[r0], 2, is.size());
         }
     }
 
@@ -304,7 +301,7 @@ public class PTree {
 
     }
 
-    public Dataset getDataset() {
+    public DataFileHandle getDataset() {
         return dataset;
     }
 

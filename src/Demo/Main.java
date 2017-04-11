@@ -11,13 +11,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
-import java.util.function.BiFunction;
 
-import HelperObjects.Dataset;
-import HelperObjects.Dataset.DataType;
+import HelperObjects.DataFileHandle;
 import HelperObjects.Dataset.FileFormat;
 import HelperObjects.Rule;
-import HelperObjects.RuleGenerator;
 import TTree.TTree;
 
 public class Main {
@@ -34,40 +31,16 @@ public class Main {
         int fileFormatChoice = selectIntegerInRange("Enter choice: ", 1, 2) - 1;
         FileFormat fileFormat = FileFormat.values()[fileFormatChoice];
 
-        System.out.println("Enter the format of the data: ");
-        System.out.println("1. Integer");
-        System.out.println("2. String");
-        int dataFormatChoice = selectIntegerInRange("Enter choice: ", 1, 2) - 1;
-        DataType dataType = DataType.values()[dataFormatChoice];
-
         System.out.print("Please enter the name of the file you wish to write to: ");
         String toWrite = reader.readLine();
 
         double minSup = readNormalizedDouble("Please enter the minimum support for frequent itemsets: ");
         double minConf = readNormalizedDouble("Please enter the minimum confidence for rules: ");
 
-        System.out.print("Generating dataset from file... ");
-        Dataset dataset = Dataset.build(toRead, fileFormat, dataType);
-        System.out.println("done");
-
-        int tableSize = dataset.getTable().size();
-        if (tableSize <= 25) {
-            System.out.println();
-            System.out.println(dataset);
-            System.out.println();
-        } else {
-            System.out.format("Dataset with %d rows read", tableSize);
-        }
-
-        int minSupCount = convertToIntegerNumerator(minSup, tableSize);
-
-        List<Rule> rules = generateRules(dataset, minSupCount, minConf);
+        DataFileHandle dataset = new DataFileHandle(toRead, fileFormat);
+        List<Rule> rules = generateRules(dataset, minSup, minConf);
 
         writeRulesToFileFromList(rules, toWrite);
-    }
-
-    private static int convertToIntegerNumerator(double d, int size) {
-        return (int) Math.ceil(d * size);
     }
 
     private static Path readPath(String prompt) throws IOException {
@@ -103,31 +76,32 @@ public class Main {
 
     }
 
-    private static List<Rule> generateRules(Dataset dataset, int minSupport, double minConf) throws IOException {
+    private static List<Rule> generateRules(DataFileHandle dataset, double minSup, double minConf) throws IOException {
         System.out.println("Enter the algorithm to run: ");
         System.out.println("1. ARM using Total Support Tree");
         System.out.println("2. ARM using Apriori-TFP");
-
+        
+        long start, end;
+        List<Rule> result;
         int choice = selectIntegerInRange("Enter selection: ", 1, 2);
-        BiFunction<Dataset, Integer, RuleGenerator> ruleGenerator;
-
+        
+        System.out.print("Generating rules...");
+        
         switch (choice) {
         case 1:
-            ruleGenerator = TTree::fromDataset;
+            start = System.currentTimeMillis();
+            result = TTree.fromDataset(dataset, minSup).generateRules(minConf);
+            end = System.currentTimeMillis();
             break;
         case 2:
-            ruleGenerator = TTree::fromPTree;
+            start = System.currentTimeMillis();
+            result = TTree.fromPTree(dataset, minSup).generateRules(minConf);
+            end = System.currentTimeMillis();
             break;
         default:
             throw new RuntimeException("Unhandled switch case in ruleGenerator");
         }
-
-        System.out.print("Generating rules...");
-        long start = System.currentTimeMillis();
-
-        List<Rule> result = ruleGenerator.apply(dataset, minSupport).generateRules(minConf);
-
-        long end = System.currentTimeMillis();
+        
         System.out.println("done");
         System.out.format("Total algorithmic time: %dms\n", end - start);
 
