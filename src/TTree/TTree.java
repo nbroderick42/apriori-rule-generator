@@ -5,66 +5,37 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import HelperObjects.DataFileHandle;
-import HelperObjects.ItemSet;
-import HelperObjects.Rule;
-import HelperObjects.RuleGenerator;
+import DataSource.DataSource;
+import DataSource.ItemSet;
+import Demo.Rule;
 import PTree.PTree;
-import PTree.PTreeTable;
-
-/*
- * Algorithm variables
- * 
- * R - input dataset
- * N - number of columns/attributes
- * D - number of records
- * ref - reference to current node
- * 
- */
+import PTree.PTreeTableRecord;
 
 /**
  * Created by Jonathan McDevitt on 2017-03-24.
  */
-public class TTree implements RuleGenerator {
+public class TTree {
 
-    private Node[] start;
-    private DataFileHandle dataset;
+    private TTreeNode[] start;
+    private DataSource dataset;
     private boolean isNewLevel;
     private int minSup;
 
-    private class Node {
-
-        private int sup = 0;
-        private Node[] chdRef;
-
-        public boolean hasChildren() {
-            if (chdRef == null) {
-                return false;
-            }
-            for (Node n : this.chdRef) {
-                if (n != null) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-
-    public static TTree fromDataset(DataFileHandle dataset, double minSup) throws IOException {
+    public static TTree fromDataset(DataSource dataset, double minSup) throws IOException {
         TTree result = new TTree(dataset, minSup);
         return result.createTtree();
     }
 
-    public static TTree fromPTree(DataFileHandle dataset, double minSup) throws IOException {
+    public static TTree fromPTree(DataSource dataset, double minSup) throws IOException {
         TTree result = new TTree(dataset, minSup);
         return result.createFromPTree();
     }
 
-    private TTree(DataFileHandle dataset, double minSup) {
+    private TTree(DataSource dataset, double minSup) {
         this.minSup = convertToIntegerNumerator(minSup, dataset.getNumRecords());
         this.dataset = dataset;
     }
-    
+
     private static int convertToIntegerNumerator(double d, int size) {
         return (int) Math.ceil(d * size);
     }
@@ -108,24 +79,24 @@ public class TTree implements RuleGenerator {
     }
 
     private void addSupportToTTreeLevelN(PTree pTree, int level) {
-        PTreeTable.Record[][] table = pTree.getPTreeTable().getStart();
+        PTreeTableRecord[][] table = pTree.getPTreeTable().getStart();
         int[] cardinalityCounts = pTree.getNodeCardinalityCounts();
         addSupportToTTreeLevelN(table, cardinalityCounts, level);
     }
-    
-    private void addSupportToTTreeLevelN(PTreeTable.Record[][] table, int[] cardinaltyCounts, int level) {
+
+    private void addSupportToTTreeLevelN(PTreeTableRecord[][] table, int[] cardinaltyCounts, int level) {
         for (int i = level; i < table.length; i++) {
             if (table[i] != null) {
                 int count = cardinaltyCounts[i];
                 for (int j = 0; j < count; j++) {
-                    PTreeTable.Record r = table[i][j];
+                    PTreeTableRecord r = table[i][j];
                     addSupportToTTreeLevelN(start, level, r.getLabel(), r.getAncestors(), r.getSup());
                 }
             }
         }
     }
 
-    private void addSupportToTTreeLevelN(Node[] ref, int level, ItemSet label, ItemSet anc, int sup) {
+    private void addSupportToTTreeLevelN(TTreeNode[] ref, int level, ItemSet label, ItemSet anc, int sup) {
         int len = ref.length;
 
         if (level == 1) {
@@ -134,7 +105,7 @@ public class TTree implements RuleGenerator {
                     break;
                 }
                 if (ref[item] != null) {
-                    ref[item].sup += sup;
+                    ref[item].incSup(sup);
                 }
             }
         } else {
@@ -142,40 +113,40 @@ public class TTree implements RuleGenerator {
                 if (item >= len) {
                     break;
                 }
-                if (ref[item] != null && ref[item].chdRef != null) {
-                    addSupportToTTreeLevelN(ref[item].chdRef, level - 1, anc, anc, sup);
+                if (ref[item] != null && ref[item].getChdRef() != null) {
+                    addSupportToTTreeLevelN(ref[item].getChdRef(), level - 1, anc, anc, sup);
                 }
             }
         }
     }
 
     private void initTopLevelNodes() throws IOException {
-        List<Node> topLevel = new ArrayList<>();
-        dataset.forEach(is -> topLevel.add(new Node()));
-        
-        start = new Node[dataset.getNumRecords() + 1];
+        List<TTreeNode> topLevel = new ArrayList<>();
+        dataset.forEach(is -> topLevel.add(new TTreeNode()));
+
+        start = new TTreeNode[dataset.getNumRecords() + 1];
         topLevel.toArray(start);
     }
 
     private void createTtreeTopLevel() throws IOException {
         initTopLevelNodes();
-        dataset.forEach(ri -> ri.forEach(sj -> start[sj].sup++));
+        dataset.forEach(ri -> ri.forEach(sj -> start[sj].incSup(1)));
         prune(start, 1);
     }
 
     private void createTtreeTopLevel(PTree pTree) throws IOException {
         initTopLevelNodes();
 
-        PTreeTable.Record[][] records = pTree.getPTreeTable().getStart();
+        PTreeTableRecord[][] records = pTree.getPTreeTable().getStart();
 
         for (int i = 1; i < records.length; i++) {
-            PTreeTable.Record[] level = records[i];
+            PTreeTableRecord[] level = records[i];
             if (level != null) {
                 for (int j = 0; j < level.length; j++) {
                     ItemSet label = level[j].getLabel();
                     int sup = level[j].getSup();
                     for (int k = 0; k < label.size(); k++) {
-                        start[label.get(k)].sup += sup;
+                        start[label.get(k)].incSup(sup);
                     }
                 }
             }
@@ -183,12 +154,11 @@ public class TTree implements RuleGenerator {
         prune(start, 1);
     }
 
-    private boolean prune(Node[] ref, int K) {
-
+    private boolean prune(TTreeNode[] ref, int K) {
         if (K == 1) {
             boolean allUnsupported = true;
             for (int t = 1; t < ref.length; t++) {
-                if (ref[t] != null && ref[t].sup < minSup) {
+                if (ref[t] != null && ref[t].getSup() < minSup) {
                     ref[t] = null;
                 } else if (ref[t] != null) {
                     allUnsupported = false;
@@ -197,9 +167,9 @@ public class TTree implements RuleGenerator {
             return allUnsupported;
         } else {
             for (int t = 1; t < ref.length; t++) {
-                if (ref[t] != null && ref[t].chdRef != null) {
-                    if (prune(ref[t].chdRef, K - 1)) {
-                        ref[t].chdRef = null;
+                if (ref[t] != null && ref[t].getChdRef() != null) {
+                    if (prune(ref[t].getChdRef(), K - 1)) {
+                        ref[t].setChdRef(null);
                     }
                 }
             }
@@ -212,25 +182,25 @@ public class TTree implements RuleGenerator {
         dataset.forEach(ri -> addSup(start, K, ri.size(), ri));
     }
 
-    private void addSup(Node[] ref, int K, int end, ItemSet r) {
+    private void addSup(TTreeNode[] ref, int K, int end, ItemSet r) {
         if (K == 1) {
             for (int i = 0; i < end; i++) {
                 int si = r.get(i);
                 if (si < ref.length && ref[si] != null) {
-                    ref[si].sup++;
+                    ref[si].incSup(1);
                 }
             }
         } else {
             for (int i = 0; i < end; i++) {
                 int si = r.get(i);
-                if (si < ref.length && ref[si] != null && ref[si].chdRef != null) {
-                    addSup(ref[si].chdRef, K - 1, i, r);
+                if (si < ref.length && ref[si] != null && ref[si].getChdRef() != null) {
+                    addSup(ref[si].getChdRef(), K - 1, i, r);
                 }
             }
         }
     }
 
-    private void genLevelN(Node[] ref, int K, ItemSet I) {
+    private void genLevelN(TTreeNode[] ref, int K, ItemSet I) {
         if (K == 1) {
             for (int i = 2; i < ref.length; i++) {
                 if (ref[i] != null) {
@@ -239,25 +209,25 @@ public class TTree implements RuleGenerator {
             }
         } else {
             for (int i = 2; i < ref.length; i++) {
-                if (ref[i] != null && ref[i].chdRef != null) {
-                    genLevelN(ref[i].chdRef, K - 1, append(i, I));
+                if (ref[i] != null && ref[i].getChdRef() != null) {
+                    genLevelN(ref[i].getChdRef(), K - 1, append(i, I));
                 }
             }
         }
     }
 
-    private void genLevel(Node[] ref, int end, ItemSet I) {
-        Node curr = ref[end];
-        curr.chdRef = new Node[end];
+    private void genLevel(TTreeNode[] ref, int end, ItemSet I) {
+        TTreeNode curr = ref[end];
+        curr.setChdRef(new TTreeNode[end]);
 
         for (int i = 1; i < end; i++) {
             if (ref[i] != null) {
                 ItemSet newI = append(i, I);
                 if (testCombinations(newI)) {
-                    curr.chdRef[i] = new Node();
+                    curr.getChdRef()[i] = new TTreeNode();
                     isNewLevel = true;
                 } else {
-                    curr.chdRef[i] = null;
+                    curr.getChdRef()[i] = null;
                 }
             }
         }
@@ -289,11 +259,11 @@ public class TTree implements RuleGenerator {
         return true;
     }
 
-    private Node findInTtree(ItemSet I) {
+    private TTreeNode findInTtree(ItemSet I) {
         return findInTtree(I, I.size() - 1, start, null);
     }
 
-    private Node findInTtree(ItemSet I, int k, Node[] ref, Node prev) {
+    private TTreeNode findInTtree(ItemSet I, int k, TTreeNode[] ref, TTreeNode prev) {
         if (k < 0) {
             return prev;
         } else if (ref == null) {
@@ -301,7 +271,7 @@ public class TTree implements RuleGenerator {
         } else {
             int next = I.get(k);
             if (next < ref.length && ref[next] != null) {
-                return findInTtree(I, k - 1, ref[next].chdRef, ref[next]);
+                return findInTtree(I, k - 1, ref[next].getChdRef(), ref[next]);
             } else {
                 return null;
             }
@@ -320,19 +290,18 @@ public class TTree implements RuleGenerator {
         return ret;
     }
 
-    @Override
     public List<Rule> generateRules(double confidence) {
         return generateRules(confidence, start, null, 0);
     }
 
-    public List<Rule> generateRules(double confidence, Node[] layer, List<Integer> path, int level) {
+    public List<Rule> generateRules(double confidence, TTreeNode[] layer, List<Integer> path, int level) {
         List<Rule> rules = new ArrayList<>();
         for (int i = 0; i < layer.length; i++) {
             /** If we are at the beginning, initialize the path */
             if (path == null) {
                 path = new ArrayList<>();
             }
-            Node n = layer[i];
+            TTreeNode n = layer[i];
             /**
              * If our value is not null, then we can begin to evaluate as a tree
              */
@@ -352,7 +321,7 @@ public class TTree implements RuleGenerator {
                  * these children
                  */
                 if (n.hasChildren()) {
-                    rules.addAll(generateRules(confidence, n.chdRef, path, level + 1));
+                    rules.addAll(generateRules(confidence, n.getChdRef(), path, level + 1));
                 }
                 /** Clear the path before moving to the next node */
                 for (int j = path.size() - 1; j >= level; j--) {
@@ -367,7 +336,7 @@ public class TTree implements RuleGenerator {
         assert path.size() >= 2 : "Need at least two elements in path";
 
         int datasetSize = dataset.getNumRecords();
-        double unionSup = (double) findInTtree(new ItemSet(path)).sup / (double) datasetSize;
+        double unionSup = (double) findInTtree(new ItemSet(path)).getSup() / (double) datasetSize;
         List<Rule> result = new ArrayList<>();
 
         BigInteger max = BigInteger.valueOf(1 << (path.size() - 1));
@@ -384,8 +353,8 @@ public class TTree implements RuleGenerator {
                 }
             }
 
-            double anteSup = (double) findInTtree(antecedent).sup / datasetSize;
-            double consSup = (double) findInTtree(consequent).sup / datasetSize;
+            double anteSup = (double) findInTtree(antecedent).getSup() / datasetSize;
+            double consSup = (double) findInTtree(consequent).getSup() / datasetSize;
 
             double anteConf = unionSup / anteSup;
             double consConf = unionSup / consSup;
@@ -400,25 +369,27 @@ public class TTree implements RuleGenerator {
 
         return result;
     }
-    
+
     public String toString() {
         StringBuilder sb = new StringBuilder();
         toString(sb, start, 0);
         return sb.toString();
     }
-    
-    private void toString(StringBuilder sb, Node[] layer, int level) {
+
+    private void toString(StringBuilder sb, TTreeNode[] layer, int level) {
         if (layer != null) {
             String result = "";
-            
-            for (int i = 0; i < level; i++) result += "\t";
-            for (int i = 0; i < layer.length; i++) result += (layer[i] != null ? i : "x") + " ";
-            
+
+            for (int i = 0; i < level; i++)
+                result += "\t";
+            for (int i = 0; i < layer.length; i++)
+                result += (layer[i] != null ? i : "x") + " ";
+
             sb.append(result + "\n");
-            
+
             for (int i = 0; i < layer.length; i++) {
                 if (layer[i] != null) {
-                    toString(sb, layer[i].chdRef, level + 1);
+                    toString(sb, layer[i].getChdRef(), level + 1);
                 }
             }
         }

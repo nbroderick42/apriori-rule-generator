@@ -1,53 +1,28 @@
 package PTree;
 
-import HelperObjects.ItemSet;
-import PTree.PTree.Node;
+import DataSource.ItemSet;
 
 public class PTreeTable {
 
     private PTree ptree;
-    private Record[][] start;
+    private PTreeTableRecord[][] start;
     private int[] marker;
-
-    public static class Record {
-        private ItemSet label;
-        private ItemSet ancestors;
-        private int sup;
-
-        private Record(ItemSet label, ItemSet ancestors, int sup) {
-            this.label = label;
-            this.ancestors = ancestors;
-            this.sup = sup;
-        }
-
-        public ItemSet getLabel() {
-            return label;
-        }
-
-        public ItemSet getAncestors() {
-            return ancestors;
-        }
-
-        public int getSup() {
-            return sup;
-        }
-    }
 
     public PTreeTable(PTree ptree) {
         this.ptree = ptree;
-        this.start = new Record[ptree.getStart().length + 1][];
+        this.start = new PTreeTableRecord[ptree.getStart().length + 1][];
         this.marker = new int[ptree.getStart().length + 1];
         createPTreeTable();
     }
 
     private void createPTreeTable() {
-        PTree.Node[] pTreeStart = ptree.getStart();
+        PTreeNode[] pTreeStart = ptree.getStart();
         int[] nodeCardinalityCounts = ptree.getNodeCardinalityCounts();
 
         for (int i = 1; i < nodeCardinalityCounts.length; i++) {
             int cardinality = nodeCardinalityCounts[i];
             if (cardinality > 0) {
-                start[i] = new Record[cardinality];
+                start[i] = new PTreeTableRecord[cardinality];
             }
         }
         for (int i = 0; i < pTreeStart.length; i++) {
@@ -61,19 +36,19 @@ public class PTreeTable {
     }
 
     private void addToTable(ItemSet ancestors, ItemSet label, int sup, int level) {
-        Record newRecord;
+        PTreeTableRecord newRecord;
 
         if (ancestors.isEmpty()) {
-            newRecord = new Record(label, label, sup);
+            newRecord = new PTreeTableRecord(label, label, sup);
         } else {
-            newRecord = new Record(ancestors, ancestors.union(label), sup);
+            newRecord = new PTreeTableRecord(ancestors, ancestors.union(label), sup);
         }
 
         start[level][marker[level]] = newRecord;
         marker[level]++;
     }
 
-    private void createPTreeTable(Node pTreeRef, ItemSet is, int currLevel) {
+    private void createPTreeTable(PTreeNode pTreeRef, ItemSet is, int currLevel) {
         if (pTreeRef != null) {
             int level = currLevel + pTreeRef.getI().size();
 
@@ -84,7 +59,7 @@ public class PTreeTable {
         }
     }
 
-    public Record[][] getStart() {
+    public PTreeTableRecord[][] getStart() {
         return start;
     }
 

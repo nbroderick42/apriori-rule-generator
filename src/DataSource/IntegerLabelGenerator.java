@@ -1,8 +1,8 @@
-package HelperObjects;
+package DataSource;
 
-class IntegerLabelGenerator extends LabelGenerator {
+public class IntegerLabelGenerator extends LabelGenerator {
 
-    IntegerLabelGenerator(int start) {
+    public IntegerLabelGenerator(int start) {
         super(start);
     }
 
@@ -10,5 +10,5 @@ class IntegerLabelGenerator extends LabelGenerator {
     protected Integer getLabel(Integer attr, String token) {
         return Integer.parseInt(token);
     }
-    
+
 }

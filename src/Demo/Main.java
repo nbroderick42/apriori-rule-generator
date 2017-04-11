@@ -12,9 +12,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-import HelperObjects.DataFileHandle;
-import HelperObjects.Dataset.FileFormat;
-import HelperObjects.Rule;
+import DataSource.DataSet;
+import DataSource.DataSource;
+import DataSource.FileFormat;
 import TTree.TTree;
 
 public class Main {
@@ -37,8 +37,8 @@ public class Main {
         double minSup = readNormalizedDouble("Please enter the minimum support for frequent itemsets: ");
         double minConf = readNormalizedDouble("Please enter the minimum confidence for rules: ");
 
-        DataFileHandle dataset = new DataFileHandle(toRead, fileFormat);
-        List<Rule> rules = generateRules(dataset, minSup, minConf);
+        DataSource dataSource = DataSource.fromPath(toRead, fileFormat, DataSet.class);
+        List<Rule> rules = generateRules(dataSource, minSup, minConf);
 
         writeRulesToFileFromList(rules, toWrite);
     }
@@ -76,7 +76,7 @@ public class Main {
 
     }
 
-    private static List<Rule> generateRules(DataFileHandle dataset, double minSup, double minConf) throws IOException {
+    private static List<Rule> generateRules(DataSource dataset, double minSup, double minConf) throws IOException {
         System.out.println("Enter the algorithm to run: ");
         System.out.println("1. ARM using Total Support Tree");
         System.out.println("2. ARM using Apriori-TFP");

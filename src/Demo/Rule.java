@@ -1,13 +1,16 @@
-package HelperObjects;
+package Demo;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import DataSource.DataSource;
+import DataSource.ItemSet;
 
 /**
  * Created by Owner on 4/3/2017.
  */
 public class Rule {
-    private Optional<DataFileHandle> dataset;
+    private Optional<DataSource> dataset;
     private ItemSet antecedent;
     private ItemSet consequent;
     private double sup;
@@ -17,7 +20,7 @@ public class Rule {
         this(null, antecedent, consequent, sup, conf);
     }
 
-    public Rule(DataFileHandle dataset, ItemSet antecedent, ItemSet consequent, double sup, double conf) {
+    public Rule(DataSource dataset, ItemSet antecedent, ItemSet consequent, double sup, double conf) {
         this.dataset = Optional.ofNullable(dataset);
         this.antecedent = antecedent;
         this.consequent = consequent;

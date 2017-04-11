@@ -1,20 +1,17 @@
-package HelperObjects;
+package DataSource;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
 public class LabelGenerator {
+    
     private final int first;
     private Map<Integer, Map<String, Integer>> tokenToLabelMap;
     private Supplier<Integer> intGenerator;
 
-    LabelGenerator(int start) {
-        this(null, start);
-    }
-
-    public LabelGenerator(Map<Integer, Map<String, Integer>> labels, int first) {
-        this.tokenToLabelMap = labels != null ? labels : new HashMap<>();
+    public LabelGenerator(int first) {
+        this.tokenToLabelMap = new HashMap<>();
         this.intGenerator = makeIntGenerator(first);
         this.first = first;
     }
