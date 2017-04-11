@@ -10,102 +10,6 @@ public class ItemSet implements Iterable<Integer> {
 
     public static final ItemSet EMPTY = new ItemSet(Collections.emptyList());
 
-    private List<Integer> items;
-
-    public ItemSet() {
-        items = new ArrayList<>();
-    }
-
-    public ItemSet(ItemSet is) {
-        items = new ArrayList<>(is.items);
-    }
-
-    public ItemSet(Collection<Integer> items) {
-        this.items = new ArrayList<>(items);
-        Collections.sort(this.items);
-    }
-
-    public ItemSet(int i) {
-        this();
-        items.add(i);
-    }
-
-    public List<Integer> getItems() {
-        return items;
-    }
-
-    public Integer get(int idx) {
-        return items.get(idx);
-    }
-
-    public ItemSet append(int i) {
-        int idx = getInsertionIndex(items, i);
-        if (idx >= 0) {
-            System.out.println("Cannot have duplicates in ItemSet");
-        } else {
-            items.add(-idx - 1, i);
-        }
-        return this;
-    }
-
-    // By Dr. Srinivas Sampalli
-    private int getInsertionIndex(List<Integer> elements, int i) {
-        if (elements.size() == 0) {
-            return -1;
-        }
-
-        int lo = 0, hi = elements.size() - 1, mid = 0, c = 0;
-
-        while (lo <= hi) {
-            mid = (lo + hi) / 2;
-            c = i - elements.get(mid);
-            if (c == 0) {
-                return mid;
-            }
-            if (c < 0) {
-                hi = mid - 1;
-            }
-            if (c > 0) {
-                lo = mid + 1;
-            }
-        }
-
-        if (c < 0)
-            return (-mid - 1);
-        else
-            return (-mid - 2);
-    }
-
-    public ItemSet append(ItemSet is) {
-        is.items.forEach(this::append);
-        return this;
-    }
-
-    public ItemSet union(ItemSet is) {
-        ItemSet ret = new ItemSet();
-        return ret.append(this).append(is);
-    }
-
-    public int size() {
-        return items.size();
-    }
-
-    public Integer remove(int n) {
-        return items.remove(n);
-    }
-
-    public boolean equals(ItemSet r) {
-        return equals(items, r.items);
-    }
-
-    public boolean isEmpty() {
-        return items.isEmpty();
-    }
-
-    public boolean greaterThan(ItemSet r) {
-        return compare(items, r.items) > 0;
-    }
-
     public static int compare(List<Integer> l1, List<Integer> l2) {
         for (int i = 0; i < l1.size() && i < l2.size(); i++) {
             int r = l1.get(i);
@@ -119,19 +23,6 @@ public class ItemSet implements Iterable<Integer> {
         }
 
         return l1.size() - l2.size();
-    }
-
-    public boolean contains(ItemSet r) {
-        return contains(items, r.items);
-    }
-
-    public boolean containedBy(ItemSet r) {
-        return contains(r.items, items);
-    }
-
-    @Override
-    public String toString() {
-        return items.toString();
     }
 
     private static boolean contains(List<Integer> l1, List<Integer> l2) {
@@ -162,12 +53,6 @@ public class ItemSet implements Iterable<Integer> {
         return ret;
     }
 
-    public static ItemSet delN(ItemSet is, ItemSet rem) {
-        ItemSet ret = new ItemSet(is);
-        ret.removeLeadingSubstring(rem.items);
-        return ret;
-    }
-
     public static ItemSet delN(ItemSet is, int j) {
         ItemSet ret = new ItemSet(is);
         while (j-- > 0) {
@@ -176,10 +61,32 @@ public class ItemSet implements Iterable<Integer> {
         return ret;
     }
 
-    public static ItemSet lss(ItemSet I1, ItemSet I2) {
-        ItemSet ret = new ItemSet(I1);
-        ret.items = getLeadingSubstring(ret.items, I2.items);
+    public static ItemSet delN(ItemSet is, ItemSet rem) {
+        ItemSet ret = new ItemSet(is);
+        ret.removeLeadingSubstring(rem.items);
         return ret;
+    }
+
+    public static ItemSet doubleton(int i1, int i2) {
+        ItemSet ret = new ItemSet();
+        ret.append(i1);
+        ret.append(i2);
+        return ret;
+    }
+
+    private static boolean equals(List<Integer> l1, List<Integer> l2) {
+        int size = l1.size();
+        if (size != l2.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < size; i++) {
+            if (!l1.get(i).equals(l2.get(i))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static List<Integer> getLeadingSubstring(List<Integer> l1, List<Integer> l2) {
@@ -206,6 +113,112 @@ public class ItemSet implements Iterable<Integer> {
         return ret;
     }
 
+    public static ItemSet lss(ItemSet I1, ItemSet I2) {
+        ItemSet ret = new ItemSet(I1);
+        ret.items = getLeadingSubstring(ret.items, I2.items);
+        return ret;
+    }
+
+    private List<Integer> items;
+
+    public ItemSet() {
+        items = new ArrayList<>();
+    }
+
+    public ItemSet(Collection<Integer> items) {
+        this.items = new ArrayList<>(items);
+        Collections.sort(this.items);
+    }
+
+    public ItemSet(int i) {
+        this();
+        items.add(i);
+    }
+
+    public ItemSet(ItemSet is) {
+        items = new ArrayList<>(is.items);
+    }
+
+    public ItemSet append(int i) {
+        int idx = getInsertionIndex(items, i);
+        if (idx >= 0) {
+            System.out.println("Cannot have duplicates in ItemSet");
+        } else {
+            items.add(-idx - 1, i);
+        }
+        return this;
+    }
+
+    public ItemSet append(ItemSet is) {
+        is.items.forEach(this::append);
+        return this;
+    }
+
+    public boolean containedBy(ItemSet r) {
+        return contains(r.items, items);
+    }
+
+    public boolean contains(ItemSet r) {
+        return contains(items, r.items);
+    }
+
+    public boolean equals(ItemSet r) {
+        return equals(items, r.items);
+    }
+
+    public Integer get(int idx) {
+        return items.get(idx);
+    }
+
+    // By Dr. Srinivas Sampalli
+    private int getInsertionIndex(List<Integer> elements, int i) {
+        if (elements.size() == 0) {
+            return -1;
+        }
+
+        int lo = 0, hi = elements.size() - 1, mid = 0, c = 0;
+
+        while (lo <= hi) {
+            mid = (lo + hi) / 2;
+            c = i - elements.get(mid);
+            if (c == 0) {
+                return mid;
+            }
+            if (c < 0) {
+                hi = mid - 1;
+            }
+            if (c > 0) {
+                lo = mid + 1;
+            }
+        }
+
+        if (c < 0)
+            return (-mid - 1);
+        else
+            return (-mid - 2);
+    }
+
+    public List<Integer> getItems() {
+        return items;
+    }
+
+    public boolean greaterThan(ItemSet r) {
+        return compare(items, r.items) > 0;
+    }
+
+    public boolean isEmpty() {
+        return items.isEmpty();
+    }
+
+    @Override
+    public Iterator<Integer> iterator() {
+        return items.iterator();
+    }
+
+    public Integer remove(int n) {
+        return items.remove(n);
+    }
+
     private void removeLeadingSubstring(List<Integer> r) {
         if (r.isEmpty()) {
             return;
@@ -219,30 +232,22 @@ public class ItemSet implements Iterable<Integer> {
         }
     }
 
-    private static boolean equals(List<Integer> l1, List<Integer> l2) {
-        int size = l1.size();
-        if (size != l2.size()) {
-            return false;
-        }
-
-        for (int i = 0; i < size; i++) {
-            if (!l1.get(i).equals(l2.get(i))) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public static ItemSet doubleton(int i1, int i2) {
-        ItemSet ret = new ItemSet();
-        ret.append(i1);
-        ret.append(i2);
-        return ret;
+    public int size() {
+        return items.size();
     }
 
     @Override
-    public Iterator<Integer> iterator() {
-        return items.iterator();
+    public String toString() {
+        return items.toString();
+    }
+
+    public ItemSet union(ItemSet is) {
+        ItemSet ret = new ItemSet();
+        return ret.append(this).append(is);
+    }
+    
+    public ItemSet union(int i) {
+        ItemSet ret = new ItemSet();
+        return ret.append(this).append(i);
     }
 }

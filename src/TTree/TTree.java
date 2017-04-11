@@ -16,10 +16,9 @@ import PTree.PTreeTableRecord;
  */
 public class TTree {
 
-    private TTreeNode[] start;
-    private DataSource dataset;
-    private boolean isNewLevel;
-    private int minSup;
+    private static int convertToIntegerNumerator(double d, int size) {
+        return (int) Math.ceil(d * size);
+    }
 
     public static TTree fromDataset(DataSource dataset, double minSup) throws IOException {
         TTree result = new TTree(dataset, minSup);
@@ -31,51 +30,39 @@ public class TTree {
         return result.createFromPTree();
     }
 
+    private DataSource dataset;
+
+    private boolean isNewLevel;
+
+    private int minSup;
+
+    private TTreeNode[] start;
+
     private TTree(DataSource dataset, double minSup) {
         this.minSup = convertToIntegerNumerator(minSup, dataset.getNumRecords());
         this.dataset = dataset;
     }
 
-    private static int convertToIntegerNumerator(double d, int size) {
-        return (int) Math.ceil(d * size);
-    }
-
-    public TTree createTtree() throws IOException {
-        createTtreeTopLevel();
-        genLevelN(start, 1, new ItemSet());
-
-        int K = 2;
-
-        while (isNewLevel) {
-            addSupport(K);
-            prune(start, K);
-            isNewLevel = false;
-            genLevelN(start, K, new ItemSet());
-            K++;
+    private void addSup(TTreeNode[] ref, int K, int end, ItemSet r) {
+        if (K == 1) {
+            for (int i = 0; i < end; i++) {
+                int si = r.get(i);
+                if (si < ref.length && ref[si] != null) {
+                    ref[si].incSup(1);
+                }
+            }
+        } else {
+            for (int i = 0; i < end; i++) {
+                int si = r.get(i);
+                if (si < ref.length && ref[si] != null && ref[si].getChdRef() != null) {
+                    addSup(ref[si].getChdRef(), K - 1, i, r);
+                }
+            }
         }
-
-        return this;
     }
 
-    public TTree createFromPTree() throws IOException {
-        PTree pTree = new PTree(dataset);
-        createTtreeTopLevel(pTree);
-        genLevelN(start, 1, new ItemSet());
-        createTtreeLevelN(pTree);
-
-        return this;
-    }
-
-    private void createTtreeLevelN(PTree pTree) {
-        int k = 2;
-
-        while (isNewLevel) {
-            addSupportToTTreeLevelN(pTree, k);
-            prune(start, k);
-            isNewLevel = false;
-            genLevelN(start, k, new ItemSet());
-            k++;
-        }
+    private void addSupport(int K) throws IOException {
+        dataset.forEach(ri -> addSup(start, K, ri.size(), ri));
     }
 
     private void addSupportToTTreeLevelN(PTree pTree, int level) {
@@ -120,12 +107,57 @@ public class TTree {
         }
     }
 
-    private void initTopLevelNodes() throws IOException {
-        List<TTreeNode> topLevel = new ArrayList<>();
-        dataset.forEach(is -> topLevel.add(new TTreeNode()));
+    private boolean combinations(ItemSet I, int start, int end, ItemSet I1, ItemSet I2) {
+        if (end > I2.size()) {
+            ItemSet testSet = I.union(I1);
+            return findInTtree(testSet) != null;
+        } else {
+            for (int i = start; i < end; i++) {
+                ItemSet tempSet = I.union(I2.get(i));
+                if (!combinations(tempSet, i + 1, end + 1, I1, I2)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 
-        start = new TTreeNode[dataset.getNumRecords() + 1];
-        topLevel.toArray(start);
+    public TTree createFromPTree() throws IOException {
+        PTree pTree = new PTree(dataset);
+        createTtreeTopLevel(pTree);
+        genLevelN(start, 1, new ItemSet());
+        createTtreeLevelN(pTree);
+
+        return this;
+    }
+
+    public TTree createTtree() throws IOException {
+        createTtreeTopLevel();
+        genLevelN(start, 1, new ItemSet());
+
+        int K = 2;
+
+        while (isNewLevel) {
+            addSupport(K);
+            prune(start, K);
+            isNewLevel = false;
+            genLevelN(start, K, new ItemSet());
+            K++;
+        }
+
+        return this;
+    }
+
+    private void createTtreeLevelN(PTree pTree) {
+        int k = 2;
+
+        while (isNewLevel) {
+            addSupportToTTreeLevelN(pTree, k);
+            prune(start, k);
+            isNewLevel = false;
+            genLevelN(start, k, new ItemSet());
+            k++;
+        }
     }
 
     private void createTtreeTopLevel() throws IOException {
@@ -154,111 +186,6 @@ public class TTree {
         prune(start, 1);
     }
 
-    private boolean prune(TTreeNode[] ref, int K) {
-        if (K == 1) {
-            boolean allUnsupported = true;
-            for (int t = 1; t < ref.length; t++) {
-                if (ref[t] != null && ref[t].getSup() < minSup) {
-                    ref[t] = null;
-                } else if (ref[t] != null) {
-                    allUnsupported = false;
-                }
-            }
-            return allUnsupported;
-        } else {
-            for (int t = 1; t < ref.length; t++) {
-                if (ref[t] != null && ref[t].getChdRef() != null) {
-                    if (prune(ref[t].getChdRef(), K - 1)) {
-                        ref[t].setChdRef(null);
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private void addSupport(int K) throws IOException {
-        dataset.forEach(ri -> addSup(start, K, ri.size(), ri));
-    }
-
-    private void addSup(TTreeNode[] ref, int K, int end, ItemSet r) {
-        if (K == 1) {
-            for (int i = 0; i < end; i++) {
-                int si = r.get(i);
-                if (si < ref.length && ref[si] != null) {
-                    ref[si].incSup(1);
-                }
-            }
-        } else {
-            for (int i = 0; i < end; i++) {
-                int si = r.get(i);
-                if (si < ref.length && ref[si] != null && ref[si].getChdRef() != null) {
-                    addSup(ref[si].getChdRef(), K - 1, i, r);
-                }
-            }
-        }
-    }
-
-    private void genLevelN(TTreeNode[] ref, int K, ItemSet I) {
-        if (K == 1) {
-            for (int i = 2; i < ref.length; i++) {
-                if (ref[i] != null) {
-                    genLevel(ref, i, append(i, I));
-                }
-            }
-        } else {
-            for (int i = 2; i < ref.length; i++) {
-                if (ref[i] != null && ref[i].getChdRef() != null) {
-                    genLevelN(ref[i].getChdRef(), K - 1, append(i, I));
-                }
-            }
-        }
-    }
-
-    private void genLevel(TTreeNode[] ref, int end, ItemSet I) {
-        TTreeNode curr = ref[end];
-        curr.setChdRef(new TTreeNode[end]);
-
-        for (int i = 1; i < end; i++) {
-            if (ref[i] != null) {
-                ItemSet newI = append(i, I);
-                if (testCombinations(newI)) {
-                    curr.getChdRef()[i] = new TTreeNode();
-                    isNewLevel = true;
-                } else {
-                    curr.getChdRef()[i] = null;
-                }
-            }
-        }
-    }
-
-    private boolean testCombinations(ItemSet I) {
-        if (I.size() < 3) {
-            return true;
-        }
-
-        ItemSet I1 = ItemSet.doubleton(I.get(1), I.get(0));
-        ItemSet I2 = ItemSet.delN(I, 2);
-
-        return combinations(new ItemSet(), 0, 2, I1, I2);
-    }
-
-    private boolean combinations(ItemSet I, int start, int end, ItemSet I1, ItemSet I2) {
-        if (end > I2.size()) {
-            ItemSet testSet = append(I, I1);
-            return findInTtree(testSet) != null;
-        } else {
-            for (int i = start; i < end; i++) {
-                ItemSet tempSet = append(I2.get(i), I);
-                if (!combinations(tempSet, i + 1, end + 1, I1, I2)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
     private TTreeNode findInTtree(ItemSet I) {
         return findInTtree(I, I.size() - 1, start, null);
     }
@@ -278,16 +205,42 @@ public class TTree {
         }
     }
 
-    private static ItemSet append(int i, ItemSet I) {
-        ItemSet ret = new ItemSet(I);
-        ret.append(i);
-        return ret;
-    }
+    private List<Rule> generatePartitions(double minConf, List<Integer> path) {
+        assert path.size() >= 2 : "Need at least two elements in path";
 
-    private static ItemSet append(ItemSet I, ItemSet J) {
-        ItemSet ret = new ItemSet(I);
-        ret.append(J);
-        return ret;
+        int datasetSize = dataset.getNumRecords();
+        double unionSup = (double) findInTtree(new ItemSet(path)).getSup() / (double) datasetSize;
+        List<Rule> result = new ArrayList<>();
+
+        BigInteger max = BigInteger.valueOf(1 << (path.size() - 1));
+
+        for (BigInteger field = BigInteger.ONE; field.compareTo(max) < 0; field = field.add(BigInteger.ONE)) {
+            ItemSet antecedent = new ItemSet();
+            ItemSet consequent = new ItemSet();
+            int j = 0;
+            for (BigInteger i = BigInteger.ONE; max.shiftLeft(1).compareTo(i) > 0; i = i.shiftLeft(1), j++) {
+                if (i.and(field).equals(BigInteger.ZERO)) {
+                    antecedent.append(path.get(j));
+                } else {
+                    consequent.append(path.get(j));
+                }
+            }
+
+            double anteSup = (double) findInTtree(antecedent).getSup() / datasetSize;
+            double consSup = (double) findInTtree(consequent).getSup() / datasetSize;
+
+            double anteConf = unionSup / anteSup;
+            double consConf = unionSup / consSup;
+
+            if (anteConf > minConf) {
+                result.add(new Rule(dataset, antecedent, consequent, unionSup, anteConf));
+            }
+            if (consConf > minConf) {
+                result.add(new Rule(dataset, consequent, antecedent, unionSup, consConf));
+            }
+        }
+
+        return result;
     }
 
     public List<Rule> generateRules(double confidence) {
@@ -332,42 +285,80 @@ public class TTree {
         return rules;
     }
 
-    private List<Rule> generatePartitions(double minConf, List<Integer> path) {
-        assert path.size() >= 2 : "Need at least two elements in path";
+    private void genLevel(TTreeNode[] ref, int end, ItemSet I) {
+        TTreeNode curr = ref[end];
+        curr.setChdRef(new TTreeNode[end]);
 
-        int datasetSize = dataset.getNumRecords();
-        double unionSup = (double) findInTtree(new ItemSet(path)).getSup() / (double) datasetSize;
-        List<Rule> result = new ArrayList<>();
-
-        BigInteger max = BigInteger.valueOf(1 << (path.size() - 1));
-
-        for (BigInteger field = BigInteger.ONE; field.compareTo(max) < 0; field = field.add(BigInteger.ONE)) {
-            ItemSet antecedent = new ItemSet();
-            ItemSet consequent = new ItemSet();
-            int j = 0;
-            for (BigInteger i = BigInteger.ONE; max.shiftLeft(1).compareTo(i) > 0; i = i.shiftLeft(1), j++) {
-                if (i.and(field).equals(BigInteger.ZERO)) {
-                    antecedent.append(path.get(j));
+        for (int i = 1; i < end; i++) {
+            if (ref[i] != null) {
+                ItemSet newI = I.union(i);
+                if (testCombinations(newI)) {
+                    curr.getChdRef()[i] = new TTreeNode();
+                    isNewLevel = true;
                 } else {
-                    consequent.append(path.get(j));
+                    curr.getChdRef()[i] = null;
                 }
             }
+        }
+    }
 
-            double anteSup = (double) findInTtree(antecedent).getSup() / datasetSize;
-            double consSup = (double) findInTtree(consequent).getSup() / datasetSize;
-
-            double anteConf = unionSup / anteSup;
-            double consConf = unionSup / consSup;
-
-            if (anteConf > minConf) {
-                result.add(new Rule(dataset, antecedent, consequent, unionSup, anteConf));
+    private void genLevelN(TTreeNode[] ref, int K, ItemSet I) {
+        if (K == 1) {
+            for (int i = 2; i < ref.length; i++) {
+                if (ref[i] != null) {
+                    genLevel(ref, i, I.union(i));
+                }
             }
-            if (consConf > minConf) {
-                result.add(new Rule(dataset, consequent, antecedent, unionSup, consConf));
+        } else {
+            for (int i = 2; i < ref.length; i++) {
+                if (ref[i] != null && ref[i].getChdRef() != null) {
+                    genLevelN(ref[i].getChdRef(), K - 1, I.union(i));
+                }
+            }
+        }
+    }
+
+    private void initTopLevelNodes() throws IOException {
+        List<TTreeNode> topLevel = new ArrayList<>();
+        dataset.forEach(is -> topLevel.add(new TTreeNode()));
+
+        start = new TTreeNode[dataset.getNumRecords() + 1];
+        topLevel.toArray(start);
+    }
+
+    private boolean prune(TTreeNode[] ref, int K) {
+        if (K == 1) {
+            boolean allUnsupported = true;
+            for (int t = 1; t < ref.length; t++) {
+                if (ref[t] != null && ref[t].getSup() < minSup) {
+                    ref[t] = null;
+                } else if (ref[t] != null) {
+                    allUnsupported = false;
+                }
+            }
+            return allUnsupported;
+        } else {
+            for (int t = 1; t < ref.length; t++) {
+                if (ref[t] != null && ref[t].getChdRef() != null) {
+                    if (prune(ref[t].getChdRef(), K - 1)) {
+                        ref[t].setChdRef(null);
+                    }
+                }
             }
         }
 
-        return result;
+        return false;
+    }
+
+    private boolean testCombinations(ItemSet I) {
+        if (I.size() < 3) {
+            return true;
+        }
+
+        ItemSet I1 = ItemSet.doubleton(I.get(1), I.get(0));
+        ItemSet I2 = ItemSet.delN(I, 2);
+
+        return combinations(new ItemSet(), 0, 2, I1, I2);
     }
 
     public String toString() {

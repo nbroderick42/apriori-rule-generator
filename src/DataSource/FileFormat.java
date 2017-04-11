@@ -3,7 +3,7 @@ package DataSource;
 import java.util.function.Function;
 
 public enum FileFormat {
-    SPACE_SEPARATED(s -> s.split("\\s+")), COMMA_SEPARATED(s -> s.split(","));
+    COMMA_SEPARATED(s -> s.split(",")), SPACE_SEPARATED(s -> s.split("\\s+"));
 
     public Function<String, String[]> split;
 

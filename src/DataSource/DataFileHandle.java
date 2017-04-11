@@ -8,13 +8,13 @@ import java.util.function.Consumer;
 
 public class DataFileHandle extends DataSource {
 
+    public static DataSource fromPath(Path path, FileFormat fileFormat) throws IOException {
+        return new DataFileHandle(path, fileFormat);
+    }
+
     public DataFileHandle(Path path, FileFormat fileFormat) throws IOException {
         super(path, fileFormat);
         super.preprocessMetadata();
-    }
-
-    public static DataSource fromPath(Path path, FileFormat fileFormat) throws IOException {
-        return new DataFileHandle(path, fileFormat);
     }
 
     @Override

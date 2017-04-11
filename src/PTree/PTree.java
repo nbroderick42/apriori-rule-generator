@@ -10,10 +10,18 @@ import DataSource.ItemSet;
  */
 public class PTree {
 
+    private static void moveSiblings(PTreeNode from, PTreeNode to) {
+        if (from.hasSiblings()) {
+            to.setSibRef(from.getSibRef());
+            from.setSibRef(null);
+        }
+    }
+
     private DataSource dataset;
-    private PTreeNodeTop[] start;
     private int[] nodeCardinalityCounts;
     private PTreeTable pTreeTable;
+
+    private PTreeNodeTop[] start;
 
     public PTree(DataSource dataset) throws IOException {
         this.dataset = dataset;
@@ -23,33 +31,6 @@ public class PTree {
         createPtree();
 
         this.pTreeTable = new PTreeTable(this);
-    }
-
-    private void createPtree() throws IOException {
-        dataset.forEach(this::addToPtreeTopLevel);
-    }
-
-    private void addToPtreeTopLevel(ItemSet is) {
-        if (is.isEmpty()) {
-            return;
-        }
-
-        int r0 = is.get(0);
-        if (start[r0] == null) {
-            start[r0] = new PTreeNodeTop(r0);
-            nodeCardinalityCounts[1]++;
-        } else {
-            start[r0].sup++;
-        }
-
-        if (is.size() > 1) {
-            addToPtree(PTreeNode::linkAsChd, start[r0].chdRef, ItemSet.del1(is), start[r0], 2, is.size());
-        }
-    }
-
-    private PTreeNodeInternal createPTreeInternalNode(ItemSet I, int sup, int level) {
-        nodeCardinalityCounts[level]++;
-        return new PTreeNodeInternal(I, sup);
     }
 
     private void addToPtree(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength,
@@ -79,13 +60,22 @@ public class PTree {
         }
     }
 
-    private void parent(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength,
-            int itemSetLength) {
-        PTreeNodeInternal newRef = createPTreeInternalNode(r, ref.sup + 1, itemSetLength);
-        newRef.chdRef = ref;
-        link.accept(oldRef, newRef);
-        ref.setI(ItemSet.delN(ref.getI(), r));
-        moveSiblings(ref, newRef);
+    private void addToPtreeTopLevel(ItemSet is) {
+        if (is.isEmpty()) {
+            return;
+        }
+
+        int r0 = is.get(0);
+        if (start[r0] == null) {
+            start[r0] = new PTreeNodeTop(r0);
+            nodeCardinalityCounts[1]++;
+        } else {
+            start[r0].sup++;
+        }
+
+        if (is.size() > 1) {
+            addToPtree(PTreeNode::linkAsChd, start[r0].chdRef, ItemSet.del1(is), start[r0], 2, is.size());
+        }
     }
 
     private void child(PTreeNode ref, ItemSet r, int parentLength, int itemSetLength) {
@@ -97,6 +87,15 @@ public class PTree {
             addToPtree(PTreeNode::linkAsChd, ref.getChdRef(), ItemSet.delN(r, ref.getI()), ref,
                     parentLength + ref.getI().size(), itemSetLength);
         }
+    }
+
+    private void createPtree() throws IOException {
+        dataset.forEach(this::addToPtreeTopLevel);
+    }
+
+    private PTreeNodeInternal createPTreeInternalNode(ItemSet I, int sup, int level) {
+        nodeCardinalityCounts[level]++;
+        return new PTreeNodeInternal(I, sup);
     }
 
     private void eldSib(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength,
@@ -115,6 +114,31 @@ public class PTree {
             newSref.setSibRef(ref);
             link.accept(oldRef, newSref);
         }
+    }
+
+    public DataSource getDataset() {
+        return dataset;
+    }
+
+    public int[] getNodeCardinalityCounts() {
+        return nodeCardinalityCounts;
+    }
+
+    public PTreeTable getPTreeTable() {
+        return pTreeTable;
+    }
+
+    public PTreeNodeTop[] getStart() {
+        return start;
+    }
+
+    private void parent(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength,
+            int itemSetLength) {
+        PTreeNodeInternal newRef = createPTreeInternalNode(r, ref.sup + 1, itemSetLength);
+        newRef.chdRef = ref;
+        link.accept(oldRef, newRef);
+        ref.setI(ItemSet.delN(ref.getI(), r));
+        moveSiblings(ref, newRef);
     }
 
     private void yngSib(PTreeNode.LinkFunction link, PTreeNode ref, ItemSet r, PTreeNode oldRef, int parentLength,
@@ -155,29 +179,6 @@ public class PTree {
         } else {
             addToPtree(PTreeNode::linkAsSib, ref.getSibRef(), r, ref, parentLength, itemSetLength);
         }
-    }
-
-    private static void moveSiblings(PTreeNode from, PTreeNode to) {
-        if (from.hasSiblings()) {
-            to.setSibRef(from.getSibRef());
-            from.setSibRef(null);
-        }
-    }
-
-    public DataSource getDataset() {
-        return dataset;
-    }
-
-    public int[] getNodeCardinalityCounts() {
-        return nodeCardinalityCounts;
-    }
-
-    public PTreeNodeTop[] getStart() {
-        return start;
-    }
-
-    public PTreeTable getPTreeTable() {
-        return pTreeTable;
     }
 
 }

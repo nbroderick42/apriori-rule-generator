@@ -22,8 +22,8 @@ class PTreeNodeTop extends PTreeNode {
     }
 
     @Override
-    protected void setSibRef(PTreeNode sibRef) {
-        throw new UnsupportedOperationException("Cannot set sibRef of PTree.NodeTop");
+    protected boolean hasSiblings() {
+        return false;
     }
 
     @Override
@@ -32,8 +32,8 @@ class PTreeNodeTop extends PTreeNode {
     }
 
     @Override
-    protected boolean hasSiblings() {
-        return false;
+    protected void setSibRef(PTreeNode sibRef) {
+        throw new UnsupportedOperationException("Cannot set sibRef of PTree.NodeTop");
     }
 
     @Override

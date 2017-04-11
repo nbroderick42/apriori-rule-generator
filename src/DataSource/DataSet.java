@@ -8,16 +8,16 @@ import java.util.function.Consumer;
 
 public class DataSet extends DataSource {
 
+    public static DataSource fromPath(Path path, FileFormat fileFormat) throws IOException {
+        return new DataSet(path, fileFormat);
+    }
+
     private List<ItemSet> itemSets;
 
     public DataSet(Path path, FileFormat fileFormat) throws IOException {
         super(path, fileFormat);
         itemSets = new ArrayList<>();
         preprocessMetadata(itemSets::add);
-    }
-
-    public static DataSource fromPath(Path path, FileFormat fileFormat) throws IOException {
-        return new DataSet(path, fileFormat);
     }
 
     @Override

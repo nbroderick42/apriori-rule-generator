@@ -3,8 +3,8 @@ package PTree;
 import DataSource.ItemSet;
 
 public class PTreeTableRecord {
-    private ItemSet label;
     private ItemSet ancestors;
+    private ItemSet label;
     private int sup;
 
     PTreeTableRecord(ItemSet label, ItemSet ancestors, int sup) {
@@ -13,12 +13,12 @@ public class PTreeTableRecord {
         this.sup = sup;
     }
 
-    public ItemSet getLabel() {
-        return label;
-    }
-
     public ItemSet getAncestors() {
         return ancestors;
+    }
+
+    public ItemSet getLabel() {
+        return label;
     }
 
     public int getSup() {

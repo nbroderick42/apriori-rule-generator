@@ -10,11 +10,6 @@ class PTreeNodeInternal extends PTreeNode {
     PTreeNodeInternal(ItemSet I, int sup) {
         this.I = I;
         this.sup = sup;
-
-    }
-
-    private PTreeNodeInternal(ItemSet I) {
-        this.I = I;
     }
 
     @Override
@@ -28,13 +23,13 @@ class PTreeNodeInternal extends PTreeNode {
     }
 
     @Override
-    protected void setI(ItemSet I) {
-        this.I = I;
+    boolean hasSiblings() {
+        return sibRef != null;
     }
 
     @Override
-    boolean hasSiblings() {
-        return sibRef != null;
+    protected void setI(ItemSet I) {
+        this.I = I;
     }
 
     @Override

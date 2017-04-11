@@ -4,15 +4,28 @@ import DataSource.ItemSet;
 
 public class PTreeTable {
 
+    private int[] marker;
     private PTree ptree;
     private PTreeTableRecord[][] start;
-    private int[] marker;
 
     public PTreeTable(PTree ptree) {
         this.ptree = ptree;
         this.start = new PTreeTableRecord[ptree.getStart().length + 1][];
         this.marker = new int[ptree.getStart().length + 1];
         createPTreeTable();
+    }
+
+    private void addToTable(ItemSet ancestors, ItemSet label, int sup, int level) {
+        PTreeTableRecord newRecord;
+
+        if (ancestors.isEmpty()) {
+            newRecord = new PTreeTableRecord(label, label, sup);
+        } else {
+            newRecord = new PTreeTableRecord(ancestors, ancestors.union(label), sup);
+        }
+
+        start[level][marker[level]] = newRecord;
+        marker[level]++;
     }
 
     private void createPTreeTable() {
@@ -33,19 +46,6 @@ public class PTreeTable {
             }
         }
 
-    }
-
-    private void addToTable(ItemSet ancestors, ItemSet label, int sup, int level) {
-        PTreeTableRecord newRecord;
-
-        if (ancestors.isEmpty()) {
-            newRecord = new PTreeTableRecord(label, label, sup);
-        } else {
-            newRecord = new PTreeTableRecord(ancestors, ancestors.union(label), sup);
-        }
-
-        start[level][marker[level]] = newRecord;
-        marker[level]++;
     }
 
     private void createPTreeTable(PTreeNode pTreeRef, ItemSet is, int currLevel) {

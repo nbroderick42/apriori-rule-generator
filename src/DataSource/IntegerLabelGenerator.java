@@ -1,13 +1,9 @@
 package DataSource;
 
-public class IntegerLabelGenerator extends LabelGenerator {
-
-    public IntegerLabelGenerator(int start) {
-        super(start);
-    }
+public class IntegerLabelGenerator implements LabelGenerator {
 
     @Override
-    protected Integer getLabel(Integer attr, String token) {
+    public Integer getLabel(Integer attr, String token) {
         return Integer.parseInt(token);
     }
 

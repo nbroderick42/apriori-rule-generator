@@ -2,8 +2,16 @@ package TTree;
 
 public class TTreeNode {
 
-    private int sup = 0;
     private TTreeNode[] chdRef;
+    private int sup = 0;
+
+    public TTreeNode[] getChdRef() {
+        return chdRef;
+    }
+
+    public int getSup() {
+        return sup;
+    }
 
     public boolean hasChildren() {
         if (chdRef == null) {
@@ -17,16 +25,8 @@ public class TTreeNode {
         return false;
     }
 
-    public int getSup() {
-        return sup;
-    }
-
     public void incSup(int sup) {
         this.sup += sup;
-    }
-
-    public TTreeNode[] getChdRef() {
-        return chdRef;
     }
 
     public void setChdRef(TTreeNode[] chdRef) {
