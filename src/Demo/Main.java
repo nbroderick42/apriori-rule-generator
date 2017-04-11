@@ -12,7 +12,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-import DataSource.DataSet;
 import DataSource.DataSource;
 import DataSource.FileFormat;
 import TTree.TTree;
@@ -69,7 +68,7 @@ public class Main {
         double minSup = readNormalizedDouble("Please enter the minimum support for frequent itemsets: ");
         double minConf = readNormalizedDouble("Please enter the minimum confidence for rules: ");
 
-        DataSource dataSource = DataSource.fromPath(toRead, fileFormat, DataSet.class);
+        DataSource dataSource = DataSource.fromPath(toRead, fileFormat);
         List<Rule> rules = generateRules(dataSource, minSup, minConf);
 
         writeRulesToFileFromList(rules, toWrite);
